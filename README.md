@@ -27,6 +27,7 @@ Your drawing is autosaved in the browser. **Save** (Ctrl+S) writes a `.schematiz
 | Add a part | Click or drag a symbol from the left library |
 | Add nodes (connection points) | Node tool (N), then click on an object. Nodes snap to the object's edges |
 | Rename an object, node or text | Double-click it, or use the right-hand panel |
+| Label font size | Select an object: *Label size*, and *Node label size* for all its nodes. Select a node: *Label size* for that node |
 | Connect two nodes | Click a node, then click the other node. With no corners placed, the wire is auto-routed |
 | Add corners while drawing a wire | Click on empty canvas. Backspace removes the last corner, Esc cancels |
 | Connect to an existing wire | While drawing a wire, click on another wire. A junction dot is created |

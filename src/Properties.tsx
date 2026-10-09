@@ -2,7 +2,7 @@ import React from 'react';
 import { produce } from 'immer';
 import { useStore } from './store';
 import type { Dash, Doc, NodeStyle, Shape, WireStyle } from './types';
-import { DEFAULT_NODE_STYLE } from './types';
+import { DEFAULT_NODE_STYLE, NODE_LABEL_SIZE, OBJECT_LABEL_SIZE } from './types';
 import { autoRoute, defaultPortLabelOffset, defaultWireStyle, findPort, newShape, normalizeWire, reconcileWires } from './model';
 import { eq, objBBox, portDir } from './geometry';
 import { align, canPasteStyle, copyStyle, deleteSelection, group, organize, organizeAttached, pasteStyle, rotateOrFlip, ungroup, zOrder } from './actions';
@@ -350,6 +350,9 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
             <Row label="Label">
               <Check label="show" value={r.p.showLabel} onChange={(v) => upd({ showLabel: v })} />
             </Row>
+            <Row label="Label size">
+              <Num value={r.p.labelSize ?? NODE_LABEL_SIZE} min={4} max={96} step={1} onChange={(v) => upd({ labelSize: Math.max(4, v), showLabel: true })} />
+            </Row>
             <Row label="X (% width)">
               <Percent value={(r.p.x / r.o.w) * 100} onChange={(v) => setPos('x', v)} />
             </Row>
@@ -453,6 +456,24 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
           <Row label="Show label">
             <Check label="" value={o.showLabel} onChange={(v) => upd((x) => (x.showLabel = v))} />
           </Row>
+          <Row label="Label size">
+            <Num value={o.labelSize ?? OBJECT_LABEL_SIZE} min={4} max={120} step={1} onChange={(v) => upd((x) => (x.labelSize = Math.max(4, v)))} />
+          </Row>
+          {o.ports.length > 0 && (
+            <Row label="Node label size">
+              <Num
+                value={o.ports[0].labelSize ?? NODE_LABEL_SIZE}
+                min={4}
+                max={96}
+                step={1}
+                onChange={(v) =>
+                  upd((x) => {
+                    for (const p of x.ports) p.labelSize = Math.max(4, v);
+                  })
+                }
+              />
+            </Row>
+          )}
           <div className="grid2">
             <Row label="X">
               <Num value={bb.x} onChange={(v) => setBox({ x: v })} />

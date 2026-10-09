@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Dash, Doc, Endpoint, NodeStyle, Obj, Port, Shape, Vec, Wire } from './types';
-import { DEFAULT_NODE_STYLE } from './types';
+import { DEFAULT_NODE_STYLE, NODE_LABEL_SIZE, OBJECT_LABEL_SIZE } from './types';
 import { add, dist, mul, norm, objCenter, portWorld, roundedPath, sub } from './geometry';
 import { findPort, junctionDegree, wireFull } from './model';
 
@@ -193,7 +193,7 @@ export function PortLabel({ o, p, interactive }: { o: Obj; p: Port; interactive:
     <text
       x={x}
       y={y}
-      fontSize={10}
+      fontSize={p.labelSize ?? NODE_LABEL_SIZE}
       fill="#475569"
       textAnchor={anchor}
       dominantBaseline="central"
@@ -218,7 +218,7 @@ export function ObjectLabel({ o, interactive }: { o: Obj; interactive: boolean }
   const c = objCenter(o);
   return (
     <g data-kind={interactive ? 'olabel' : undefined} data-id={o.id} style={{ cursor: interactive ? 'move' : undefined }}>
-      <TextLines text={o.label} x={c.x + o.labelOffset.x} y={c.y + o.labelOffset.y} fontSize={13} color="#0f172a" />
+      <TextLines text={o.label} x={c.x + o.labelOffset.x} y={c.y + o.labelOffset.y} fontSize={o.labelSize ?? OBJECT_LABEL_SIZE} color="#0f172a" />
     </g>
   );
 }

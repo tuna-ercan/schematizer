@@ -1,4 +1,5 @@
 import type { Doc, Endpoint, Junction, Obj, Port, Rect, Shape, Vec, Wire, WireStyle } from './types';
+import { NODE_LABEL_SIZE, OBJECT_LABEL_SIZE } from './types';
 import {
   composeOrient, dist, eq, localToWorld, objBBox, objCenter, portDir, portWorld, projectOnPolyline,
   pointsBBox, simplifyPolyline, snapN, sub, unionRect, worldToLocal,
@@ -320,14 +321,16 @@ export function labelBoxes(doc: Doc): Rect[] {
     if (o.showLabel && o.label) {
       const c = objCenter(o);
       const lines = o.label.split('\n');
-      const w = Math.max(...lines.map((l) => l.length)) * 13 * 0.6, h = lines.length * 16;
+      const fs = o.labelSize ?? OBJECT_LABEL_SIZE;
+      const w = Math.max(...lines.map((l) => l.length)) * fs * 0.6, h = lines.length * fs * 1.2;
       out.push({ x: c.x + o.labelOffset.x - w / 2, y: c.y + o.labelOffset.y - h / 2, w, h });
     }
     for (const p of o.ports) {
       if (!p.showLabel) continue;
       const text = (p.number ? `${p.name} (${p.number})` : p.name) + (p.net ? ` [${p.net}]` : '');
       if (!text.trim()) continue;
-      const w = text.length * 6, h = 10;
+      const fs = p.labelSize ?? NODE_LABEL_SIZE;
+      const w = text.length * fs * 0.6, h = fs;
       const wp = portWorld(o, p);
       const x = wp.x + p.labelOffset.x, y = wp.y + p.labelOffset.y;
       const left = p.labelOffset.x < -2 ? x - w : p.labelOffset.x > 2 ? x : x - w / 2;

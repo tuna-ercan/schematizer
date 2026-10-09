@@ -64,7 +64,12 @@ export interface Port {
   labelOffset: Vec;
   /** missing on older drawings: DEFAULT_NODE_STYLE */
   style?: NodeStyle;
+  /** label font size (missing: NODE_LABEL_SIZE) */
+  labelSize?: number;
 }
+
+export const OBJECT_LABEL_SIZE = 13;
+export const NODE_LABEL_SIZE = 10;
 
 export interface Obj {
   id: string;
@@ -79,6 +84,8 @@ export interface Obj {
   showLabel: boolean;
   /** label position relative to the object's world center */
   labelOffset: Vec;
+  /** label font size (missing: OBJECT_LABEL_SIZE) */
+  labelSize?: number;
   shapes: Shape[];
   ports: Port[];
 }

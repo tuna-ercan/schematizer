@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { Doc } from './types';
+import { NODE_LABEL_SIZE, OBJECT_LABEL_SIZE } from './types';
 import { Scene } from './Scene';
 import { objBBox, pointsBBox, portWorld, unionRect } from './geometry';
 import { wireFull } from './model';
@@ -33,14 +34,18 @@ export function docBounds(doc: Doc) {
     if (o.label && o.showLabel) {
       const b = objBBox(o);
       const cx = b.x + b.w / 2 + o.labelOffset.x, cy = b.y + b.h / 2 + o.labelOffset.y;
-      const tw = o.label.length * 7.5;
-      rs.push({ x: cx - tw / 2, y: cy - 10, w: tw, h: 20 });
+      const fs = o.labelSize ?? OBJECT_LABEL_SIZE;
+      const lines = o.label.split('\n');
+      const tw = Math.max(...lines.map((l) => l.length)) * fs * 0.6;
+      const th = lines.length * fs * 1.2;
+      rs.push({ x: cx - tw / 2, y: cy - th / 2, w: tw, h: th });
     }
     for (const p of o.ports) {
       if (!p.showLabel) continue;
       const wp = portWorld(o, p);
-      const tw = (p.name.length + p.net.length + 4) * 6;
-      rs.push({ x: wp.x + p.labelOffset.x - tw, y: wp.y + p.labelOffset.y - 8, w: tw * 2, h: 16 });
+      const fs = p.labelSize ?? NODE_LABEL_SIZE;
+      const tw = (p.name.length + p.net.length + 4) * fs * 0.6;
+      rs.push({ x: wp.x + p.labelOffset.x - tw, y: wp.y + p.labelOffset.y - fs * 0.8, w: tw * 2, h: fs * 1.6 });
     }
   }
   for (const w of Object.values(doc.wires)) rs.push(pointsBBox(wireFull(doc, w)));
