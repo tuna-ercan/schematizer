@@ -131,6 +131,26 @@ export const Icons = {
       <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
     </I>
   ),
+  ruler: (
+    <I>
+      <path d="M3 8h18v8H3z" />
+      <path d="M7 8v3M11 8v4M15 8v3M19 8v4" />
+    </I>
+  ),
+  alignVCenter: (
+    <I>
+      <path d="M3 12h18" strokeDasharray="2 2" />
+      <rect x="5" y="7" width="5" height="10" rx="1" />
+      <rect x="14" y="9" width="5" height="6" rx="1" />
+    </I>
+  ),
+  alignHCenter: (
+    <I>
+      <path d="M12 3v18" strokeDasharray="2 2" />
+      <rect x="7" y="5" width="10" height="5" rx="1" />
+      <rect x="9" y="14" width="6" height="5" rx="1" />
+    </I>
+  ),
   help: (
     <I>
       <circle cx="12" cy="12" r="9" />

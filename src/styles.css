@@ -57,6 +57,24 @@ button { font: inherit; color: inherit; }
   position: absolute; left: 12px; bottom: 10px; right: 12px; pointer-events: none;
   color: var(--muted); font-size: 12px; text-shadow: 0 0 4px #fff, 0 0 4px #fff;
 }
+.canvas-wrap.with-rulers .hint { left: 32px; }
+.rulers { position: absolute; inset: 0; pointer-events: none; }
+.ruler { position: absolute; pointer-events: auto; display: block; }
+.ruler-top { top: 0; left: 0; cursor: ns-resize; }
+.ruler-left { top: 0; left: 0; cursor: ew-resize; }
+.ruler-bg { fill: #f8fafc; }
+.ruler-edge { stroke: var(--border); }
+.ruler-ticks line { stroke: #94a3b8; stroke-width: 1; shape-rendering: crispEdges; }
+.ruler-ticks text { fill: #64748b; font: 9px Inter, system-ui, sans-serif; user-select: none; }
+.ruler-sel { fill: rgba(59, 130, 246, 0.15); }
+.ruler-cursor { stroke: #ef4444; stroke-width: 1; shape-rendering: crispEdges; }
+.ruler-corner {
+  position: absolute; top: 0; left: 0; width: 20px; height: 20px; background: #f8fafc; pointer-events: auto;
+  border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
+.guide-preview { position: absolute; pointer-events: none; background: #06b6d4; }
+.guide-preview.v { top: 0; bottom: 0; width: 1px; }
+.guide-preview.h { left: 0; right: 0; height: 1px; }
 .inline-editor {
   position: absolute; transform: translate(-50%, -50%); min-width: 140px; width: 200px;
   font: 13px Inter, system-ui, sans-serif; text-align: center; resize: none; padding: 4px 6px;

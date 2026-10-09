@@ -15,6 +15,7 @@ import { applyMove, dragCorner, dragSegment, insertCorner, movePort, portLocalAt
 import { pointer, addImageFile, addObject, copyToClip, deleteSelection, duplicate, group, organize, pasteFromText, rerouteWire, rotateOrFlip, selectAll, ungroup, zOrder, zoomToFit } from './actions';
 import type { MenuItem } from './ContextMenu';
 import { instantiate, type LibSymbol } from './symbols';
+import { RULER, Rulers } from './Rulers';
 
 type DrawEnd = Endpoint | { kind: 'wirept'; wire: string; seg: number; point: Vec };
 
@@ -22,7 +23,8 @@ type Interaction =
   | { kind: 'idle' }
   | { kind: 'pan'; start: Vec; pan0: Vec }
   | { kind: 'marquee'; start: Vec; cur: Vec; base: string[] }
-  | { kind: 'move'; start: Vec; screen: Vec; orig: Doc; objs: Set<string>; juncs: Set<string>; wires: Set<string>; anchor: Vec; moved: boolean; clicked: string; shift: boolean }
+  | { kind: 'move'; start: Vec; screen: Vec; orig: Doc; objs: Set<string>; juncs: Set<string>; wires: Set<string>; anchor: Vec; bb: Rect | null; moved: boolean; clicked: string; shift: boolean }
+  | { kind: 'guide'; axis: 'v' | 'h'; idx: number; orig: Doc }
   | { kind: 'pendingPort'; obj: string; port: string; screen: Vec; orig: Doc; canDrag: boolean }
   | { kind: 'pendingJunction'; id: string; screen: Vec; start: Vec; orig: Doc }
   | { kind: 'movePort'; obj: string; port: string; orig: Doc }
@@ -382,6 +384,11 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     }
 
     // --- select tool
+    if (t.kind === 'guide' && t.handle && t.idx != null) {
+      ia.current = { kind: 'guide', axis: t.handle as 'v' | 'h', idx: t.idx, orig: s.doc };
+      capture();
+      return;
+    }
     if (t.kind === 'handle' && t.handle && s.sel.length === 1 && s.doc.objects[s.sel[0]]) {
       const o = s.doc.objects[s.sel[0]];
       const bb = objBBox(o);
@@ -460,6 +467,27 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     rerender();
   };
 
+  /** Nudge a move so the moving box's edge or center lands on a nearby guide. */
+  const snapToGuides = (bb: Rect, delta: Vec): Vec => {
+    const s = S();
+    const g = s.doc.guides;
+    if (!s.showGuides || !g) return delta;
+    const tol = 8 / s.zoom;
+    const best = (vals: number[], guides: number[]) => {
+      let out = 0, bd = tol;
+      for (const v of vals) for (const gv of guides) if (Math.abs(gv - v) < bd) {
+        bd = Math.abs(gv - v);
+        out = gv - v;
+      }
+      return out;
+    };
+    const x = bb.x + delta.x, y = bb.y + delta.y;
+    return {
+      x: delta.x + best([x, x + bb.w / 2, x + bb.w], g.v),
+      y: delta.y + best([y, y + bb.h / 2, y + bb.h], g.h),
+    };
+  };
+
   const beginMove = (m: Vec, screen: Vec, clicked: string, shift: boolean) => {
     const s = S();
     const objs = new Set(s.sel.filter((id) => s.doc.objects[id]));
@@ -467,7 +495,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     const wires = new Set(s.sel.filter((id) => s.doc.wires[id]));
     const bb = unionRect([...objs].map((id) => objBBox(s.doc.objects[id])));
     const anchor = bb ? { x: bb.x, y: bb.y } : juncs.size ? { ...s.doc.junctions[[...juncs][0]] } : m;
-    ia.current = { kind: 'move', start: m, screen, orig: s.doc, objs, juncs, wires, anchor, moved: false, clicked, shift };
+    ia.current = { kind: 'move', start: m, screen, orig: s.doc, objs, juncs, wires, anchor, bb, moved: false, clicked, shift };
   };
 
   const moved = (screen: Vec, e: React.PointerEvent) => Math.hypot(e.clientX - screen.x, e.clientY - screen.y) > DRAG_THRESHOLD;
@@ -495,6 +523,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         cur.moved = true;
         let delta = sub(m, cur.start);
         if (s.snap) delta = sub(snapV(add(cur.anchor, delta), s.grid), cur.anchor);
+        if (cur.bb) delta = snapToGuides(cur.bb, delta);
         s.setLive(applyMove(cur.orig, cur.objs, cur.juncs, cur.wires, delta, s.grid));
         return;
       }
@@ -512,6 +541,12 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
           onPointerMove(e);
         }
         return;
+      case 'guide': {
+        const pos = cur.axis === 'v' ? m.x : m.y;
+        const v = s.snap ? snapN(pos, s.grid) : pos;
+        s.setLive(produce(cur.orig, (d) => void (d.guides![cur.axis][cur.idx] = v)));
+        return;
+      }
       case 'movePort':
         s.setLive(movePort(cur.orig, cur.obj, cur.port, m, s.grid, s.snap));
         return;
@@ -613,6 +648,14 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         startWire({ kind: 'junction', id: cur.id }, toWorld(e.clientX, e.clientY));
         rerender();
         return;
+      case 'guide': {
+        // dropping a guide back onto its ruler deletes it
+        const r = svgRef.current!.getBoundingClientRect();
+        const local = cur.axis === 'v' ? e.clientX - r.left : e.clientY - r.top;
+        if (s.showRulers && local <= RULER) s.setLive(produce(cur.orig, (d) => void d.guides![cur.axis].splice(cur.idx, 1)));
+        s.pushHistory(cur.orig);
+        break;
+      }
       case 'movePort':
       case 'label':
       case 'resize':
@@ -772,6 +815,12 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         { label: 'Select all', shortcut: 'Ctrl+A', action: selectAll },
         { label: 'Zoom to fit', shortcut: 'Shift+1', action: zoomToFit },
         { label: 'Organize all wires', action: () => { s.select([]); organize(); } },
+        { sep: true },
+        { label: s.showRulers ? 'Hide rulers' : 'Show rulers', shortcut: 'Ctrl+R', action: () => s.set({ showRulers: !s.showRulers }) },
+        { label: s.showGuides ? 'Hide guides' : 'Show guides', shortcut: 'Ctrl+;', action: () => s.set({ showGuides: !s.showGuides }) },
+        ...(s.doc.guides && (s.doc.guides.v.length || s.doc.guides.h.length)
+          ? [{ label: 'Clear guides', action: () => s.commit((d) => void (d.guides = { v: [], h: [] })) }]
+          : []),
       );
     }
     openMenu(e.clientX, e.clientY, items);
@@ -871,6 +920,22 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
   const hz = 1 / zoom;
   const overlays: React.ReactNode[] = [];
 
+  // ruler guides
+  if (st.showGuides && doc.guides) {
+    const big = 1e6;
+    (['v', 'h'] as const).forEach((axis) =>
+      doc.guides![axis].forEach((v, i) => {
+        const line = axis === 'v' ? { x1: v, x2: v, y1: -big, y2: big } : { x1: -big, x2: big, y1: v, y2: v };
+        overlays.unshift(
+          <g key={`g-${axis}-${i}`} data-kind="guide" data-handle={axis} data-idx={i} style={{ cursor: axis === 'v' ? 'ew-resize' : 'ns-resize' }}>
+            <line {...line} stroke="transparent" strokeWidth={7 * hz} />
+            <line {...line} stroke="#06b6d4" strokeWidth={hz} pointerEvents="none" />
+          </g>,
+        );
+      }),
+    );
+  }
+
   // selection boxes + resize handles
   for (const id of sel) {
     const o = doc.objects[id];
@@ -930,7 +995,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     cur.kind === 'pan' || spaceDown.current ? 'grabbing' : tool === 'box' || tool === 'line' || tool === 'wire' ? 'crosshair' : tool === 'text' ? 'text' : tool === 'node' ? 'copy' : 'default';
 
   return (
-    <div id="canvas-wrap" className="canvas-wrap" onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+    <div id="canvas-wrap" className={`canvas-wrap${st.showRulers ? ' with-rulers' : ''}`} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
       <svg
         ref={svgRef}
         className={`canvas tool-${tool}`}
@@ -966,6 +1031,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
           }}
         />
       )}
+      <Rulers />
       <div className="hint">{hintFor(tool, cur.kind, ortho, snap)}</div>
     </div>
   );

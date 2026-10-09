@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { useStore } from './store';
 import type { Tool } from './types';
 import { Icons } from './icons';
-import { addImageFile, deleteSelection, group, organize, rotateOrFlip, ungroup, zoomBy, zoomToFit } from './actions';
+import { addImageFile, align, deleteSelection, group, organize, rotateOrFlip, ungroup, zoomBy, zoomToFit } from './actions';
 import { exportPng, exportSvg, parseProject, saveProject } from './io';
 import { emptyDoc } from './types';
 
@@ -98,6 +98,9 @@ export function Toolbar({ onHelp }: { onHelp: () => void }) {
         <Btn title="Show grid" active={s.showGrid} onClick={() => s.set({ showGrid: !s.showGrid })}>
           {Icons.grid}
         </Btn>
+        <Btn title={`Rulers: ${s.showRulers ? 'shown' : 'hidden'} (Ctrl+R)`} active={s.showRulers} onClick={() => s.set({ showRulers: !s.showRulers })}>
+          {Icons.ruler}
+        </Btn>
         <button className="tb-text accent" title="Organize selected connections (or all, if nothing is selected)" onClick={organize}>
           {Icons.organize}
           <span>Organize</span>
@@ -109,6 +112,12 @@ export function Toolbar({ onHelp }: { onHelp: () => void }) {
         </Btn>
         <Btn title="Flip horizontal (F)" onClick={() => rotateOrFlip('flipX')} disabled={!hasObjSel}>
           {Icons.flip}
+        </Btn>
+        <Btn title="Align vertical centers – line objects up in a row (Shift+V)" onClick={() => align('vcenter')} disabled={!multiObj}>
+          {Icons.alignVCenter}
+        </Btn>
+        <Btn title="Align horizontal centers – line objects up in a column (Shift+H)" onClick={() => align('hcenter')} disabled={!multiObj}>
+          {Icons.alignHCenter}
         </Btn>
         <Btn title="Group (Ctrl+G)" onClick={group} disabled={!multiObj}>
           {Icons.group}

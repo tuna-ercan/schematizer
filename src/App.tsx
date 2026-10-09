@@ -5,7 +5,7 @@ import { Properties } from './Properties';
 import { Library } from './Library';
 import { ContextMenu, type MenuItem } from './ContextMenu';
 import { useStore } from './store';
-import { addImageFile, copyToClip, lastClipText, deleteSelection, duplicate, group, pasteFromText, rotateOrFlip, selectAll, ungroup, zOrder, zoomBy, zoomToFit } from './actions';
+import { addImageFile, align, copyToClip, lastClipText, deleteSelection, duplicate, group, pasteFromText, rotateOrFlip, selectAll, ungroup, zOrder, zoomBy, zoomToFit } from './actions';
 import { saveProject } from './io';
 import { loadUserSymbols, saveUserSymbols, type LibSymbol } from './symbols';
 import { groupObjects, uid } from './model';
@@ -73,6 +73,8 @@ export function App() {
         else if (k === '-') zoomBy(1 / 1.2);
         else if (k === ']') zOrder('front');
         else if (k === '[') zOrder('back');
+        else if (k === 'r') s.set({ showRulers: !s.showRulers });
+        else if (k === ';') s.set({ showGuides: !s.showGuides });
         else if (k === 'c' || k === 'x') {
           // copy right away; the 'copy' event (if it fires) also puts it on the system clipboard
           if (window.getSelection()?.toString()) return;
@@ -101,6 +103,8 @@ export function App() {
       else if (e.key === '!' || (e.shiftKey && e.code === 'Digit1')) zoomToFit();
       else if (k === 'r' && !e.shiftKey) rotateOrFlip('rotate');
       else if (k === 'f') rotateOrFlip(e.shiftKey ? 'flipY' : 'flipX');
+      else if (k === 'v' && e.shiftKey) align('vcenter');
+      else if (k === 'h' && e.shiftKey) align('hcenter');
       else if (k === 'o') s.set({ ortho: !s.ortho });
       else if (k === 'g') s.set({ snap: !s.snap });
       else if (k === 'i') document.querySelector<HTMLInputElement>('input[type=file][accept="image/*"]')?.click();
@@ -204,6 +208,9 @@ const shortcuts: [string, string][] = [
   ['R / F / Shift+F', 'Rotate / flip horizontal / flip vertical'],
   ['Ctrl+C / Ctrl+V / Ctrl+X / Ctrl+D', 'Copy / paste / cut / duplicate'],
   ['Ctrl+G / Ctrl+Shift+G', 'Group / ungroup'],
+  ['Shift+V / Shift+H', 'Align vertical centers (row) / horizontal centers (column)'],
+  ['Ctrl+R / Ctrl+;', 'Show/hide rulers / guides'],
+  ['Drag from a ruler', 'Create a guide (drag it back onto the ruler to delete)'],
   ['Ctrl+Z / Ctrl+Y', 'Undo / redo'],
   ['Ctrl+S', 'Save project file'],
   ['Arrows (Shift)', 'Nudge selection'],

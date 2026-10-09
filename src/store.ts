@@ -22,6 +22,8 @@ export interface State {
   ortho: boolean;
   grid: number;
   showGrid: boolean;
+  showRulers: boolean;
+  showGuides: boolean;
   pan: Vec;
   zoom: number;
   wireStyle: WireStyle;
@@ -56,7 +58,7 @@ function loadInitial(): Partial<State> {
     const s = localStorage.getItem(LS_SETTINGS);
     if (s) {
       const j = JSON.parse(s);
-      for (const k of ['snap', 'ortho', 'grid', 'showGrid', 'wireStyle', 'fileName'] as const) if (j[k] !== undefined) (out as any)[k] = j[k];
+      for (const k of ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'fileName'] as const) if (j[k] !== undefined) (out as any)[k] = j[k];
     }
   } catch {
     /* ignore */
@@ -77,6 +79,8 @@ export const useStore = create<State>((set, get) => ({
   ortho: true,
   grid: 10,
   showGrid: true,
+  showRulers: true,
+  showGuides: true,
   pan: { x: 0, y: 0 },
   zoom: 1,
   wireStyle: { ...defaultWireStyle },
@@ -127,10 +131,12 @@ useStore.subscribe((s, prev) => {
       }
     }, 400);
   }
-  if (s.snap !== prev.snap || s.ortho !== prev.ortho || s.grid !== prev.grid || s.showGrid !== prev.showGrid || s.wireStyle !== prev.wireStyle || s.fileName !== prev.fileName) {
+  const keys = ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'fileName'] as const;
+  if (keys.some((k) => s[k] !== prev[k])) {
     try {
-      const { snap, ortho, grid, showGrid, wireStyle, fileName } = s;
-      localStorage.setItem(LS_SETTINGS, JSON.stringify({ snap, ortho, grid, showGrid, wireStyle, fileName }));
+      const out: Record<string, unknown> = {};
+      for (const k of keys) out[k] = s[k];
+      localStorage.setItem(LS_SETTINGS, JSON.stringify(out));
     } catch {
       /* ignore */
     }

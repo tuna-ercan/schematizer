@@ -93,6 +93,8 @@ export interface Doc {
   order: string[];
   wires: Record<string, Wire>;
   junctions: Record<string, Junction>;
+  /** ruler guides: v = vertical guide x positions, h = horizontal guide y positions */
+  guides?: { v: number[]; h: number[] };
 }
 
 export interface Rect {
