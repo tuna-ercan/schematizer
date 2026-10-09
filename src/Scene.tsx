@@ -56,14 +56,33 @@ type Stop = { x: number; y: number; r: number };
 /** Shorten an open polyline whose end sits on a node, so it stops at the node's outer ring. */
 function trimToStops(pts: Vec[], stops: Stop[]): Vec[] {
   if (pts.length < 2 || !stops.length) return pts;
-  const out = pts.map((p) => ({ ...p }));
-  const cut = (i: number, j: number) => {
-    const st = stops.find((q) => Math.abs(q.x - out[i].x) < 0.5 && Math.abs(q.y - out[i].y) < 0.5);
-    if (st && st.r > 0 && dist(out[i], out[j]) > st.r) out[i] = add(out[i], mul(norm(sub(out[j], out[i])), st.r));
-  };
-  cut(0, 1);
-  cut(out.length - 1, out.length - 2);
-  return out;
+  const at = (p: Vec) => stops.find((q) => Math.abs(q.x - p.x) < 0.5 && Math.abs(q.y - p.y) < 0.5)?.r ?? 0;
+  return cutEnds(pts, at(pts[0]), at(pts[pts.length - 1]));
+}
+
+/**
+ * Start a polyline where it leaves a circle of radius r around its first point
+ * (skipping any tiny pieces inside the circle).
+ */
+function cutStart(pts: Vec[], r: number): Vec[] {
+  if (r <= 0 || pts.length < 2) return pts;
+  const c = pts[0];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    if (dist(b, c) <= r) continue;
+    // a is inside the circle, b outside: solve |a + t(b - a) - c| = r for t in [0, 1]
+    const d = sub(b, a), f = sub(a, c);
+    const A = d.x * d.x + d.y * d.y, B = 2 * (f.x * d.x + f.y * d.y), C = f.x * f.x + f.y * f.y - r * r;
+    const t = (-B + Math.sqrt(Math.max(0, B * B - 4 * A * C))) / (2 * A);
+    return [add(a, mul(d, t)), ...pts.slice(i + 1)];
+  }
+  return pts; // the whole line is inside the ring
+}
+
+/** Stop a polyline at node rings of radius ra (start) and rb (end). */
+function cutEnds(pts: Vec[], ra: number, rb: number): Vec[] {
+  const out = cutStart(pts, ra);
+  return cutStart(out.slice().reverse(), rb).reverse();
 }
 
 export function ShapeView({ s, stops = [] }: { s: Shape; stops?: Stop[] }) {
@@ -134,12 +153,8 @@ export function WireView({ doc, w, interactive, selected, highlighted }: { doc: 
     const ns = r?.p.style ?? DEFAULT_NODE_STYLE;
     return r && (interactive || ns.exportVisible) ? ns.outerRadius : 0;
   };
-  if (ends.length >= 2) {
-    const n = ends.length;
-    const ta = trim(w.a), tb = trim(w.b);
-    if (ta > 0 && dist(ends[0], ends[1]) > ta) ends[0] = add(ends[0], mul(norm(sub(ends[1], ends[0])), ta));
-    if (tb > 0 && dist(ends[n - 1], ends[n - 2]) > tb) ends[n - 1] = add(ends[n - 1], mul(norm(sub(ends[n - 2], ends[n - 1])), tb));
-  }
+  const cut = cutEnds(ends, trim(w.a), trim(w.b));
+  ends.splice(0, ends.length, ...cut);
   const pts = ends.map((p) => ({ ...p }));
   // shorten the line under arrowheads so the stroke does not poke through the tip
   if (w.arrowB && pts.length >= 2) {

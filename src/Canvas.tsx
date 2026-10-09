@@ -499,6 +499,22 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     ia.current = { kind: 'move', start: m, screen, orig: s.doc, objs, juncs, wires, anchor, bb, moved: false, clicked, shift };
   };
 
+  /**
+   * Nodes are often off the grid (e.g. on images). When a dragged corner / segment is close to
+   * lining up with one of the wire's end nodes, line it up exactly, so no tiny step is left.
+   */
+  const alignToEnds = (p: Vec, raw: Vec, d: Doc, wireId: string): Vec => {
+    const w = d.wires[wireId];
+    if (!w) return p;
+    const tol = Math.max(S().grid * 0.6, 6 / S().zoom);
+    const out = { ...p };
+    for (const e of [endpointPos(d, w.a), endpointPos(d, w.b)]) {
+      if (Math.abs(raw.x - e.x) < tol) out.x = e.x;
+      if (Math.abs(raw.y - e.y) < tol) out.y = e.y;
+    }
+    return out;
+  };
+
   const moved = (screen: Vec, e: React.PointerEvent) => Math.hypot(e.clientX - screen.x, e.clientY - screen.y) > DRAG_THRESHOLD;
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -579,7 +595,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         return;
       }
       case 'corner':
-        s.setLive(dragCorner(cur.orig, cur.wire, cur.idx, snapPt(m), s.grid));
+        s.setLive(dragCorner(cur.orig, cur.wire, cur.idx, alignToEnds(snapPt(m), m, cur.orig, cur.wire), s.grid));
         return;
       case 'segment': {
         if (!cur.moved && !moved(cur.screen, e)) return;
@@ -587,7 +603,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         if (!w) return;
         if (w.ortho) {
           cur.moved = true;
-          s.setLive(dragSegment(cur.orig, cur.wire, cur.seg, snapPt(m)));
+          s.setLive(dragSegment(cur.orig, cur.wire, cur.seg, alignToEnds(snapPt(m), m, cur.orig, cur.wire)));
         } else {
           // free-angle wire: grabbing a segment bends it at that point
           const orig2 = produce(cur.orig, (d) => void d.wires[cur.wire].points.splice(cur.seg, 0, snapPt(cur.start)));
