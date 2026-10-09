@@ -2,6 +2,8 @@
 
 A browser app for block diagrams and simple circuit schematics on a grid canvas.
 
+![Schematizer editing a small circuit and block diagram](docs/screenshot.png)
+
 ## Run
 
 Double-click **`Start Schematizer.bat`**, or run:
