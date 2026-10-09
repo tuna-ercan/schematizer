@@ -942,7 +942,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     const o = doc.objects[id];
     if (!o) continue;
     const b = objBBox(o);
-    overlays.push(<rect key={`sb-${id}`} x={b.x - 3 * hz} y={b.y - 3 * hz} width={b.w + 6 * hz} height={b.h + 6 * hz} fill="none" stroke="#3b82f6" strokeWidth={hz} strokeDasharray={`${4 * hz} ${3 * hz}`} pointerEvents="none" />);
+    overlays.push(<rect key={`sb-${id}`} x={b.x - 3 * hz} y={b.y - 3 * hz} width={b.w + 6 * hz} height={b.h + 6 * hz} fill="none" stroke="#3aa76d" strokeWidth={hz} strokeDasharray={`${4 * hz} ${3 * hz}`} pointerEvents="none" />);
   }
   if (sel.length === 1 && doc.objects[sel[0]] && tool === 'select') {
     const b = objBBox(doc.objects[sel[0]]);
@@ -950,7 +950,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     const hpos: [string, number, number][] = [['nw', b.x, b.y], ['ne', b.x + b.w, b.y], ['sw', b.x, b.y + b.h], ['se', b.x + b.w, b.y + b.h]];
     for (const [h, x, y] of hpos) {
       overlays.push(
-        <rect key={`h-${h}`} data-kind="handle" data-handle={h} x={x - hs / 2} y={y - hs / 2} width={hs} height={hs} fill="#fff" stroke="#3b82f6" strokeWidth={1.5 * hz} style={{ cursor: h === 'nw' || h === 'se' ? 'nwse-resize' : 'nesw-resize' }} />,
+        <rect key={`h-${h}`} data-kind="handle" data-handle={h} x={x - hs / 2} y={y - hs / 2} width={hs} height={hs} fill="#fff" stroke="#3aa76d" strokeWidth={1.5 * hz} style={{ cursor: h === 'nw' || h === 'se' ? 'nwse-resize' : 'nesw-resize' }} />,
       );
     }
   }
@@ -960,7 +960,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     if (!w) continue;
     w.points.forEach((p, i) => {
       const hs = 7 * hz;
-      overlays.push(<rect key={`c-${id}-${i}`} data-kind="corner" data-id={id} data-idx={i} x={p.x - hs / 2} y={p.y - hs / 2} width={hs} height={hs} fill="#fff" stroke="#3b82f6" strokeWidth={1.5 * hz} style={{ cursor: 'move' }} />);
+      overlays.push(<rect key={`c-${id}-${i}`} data-kind="corner" data-id={id} data-idx={i} x={p.x - hs / 2} y={p.y - hs / 2} width={hs} height={hs} fill="#fff" stroke="#3aa76d" strokeWidth={1.5 * hz} style={{ cursor: 'move' }} />);
     });
   }
   // selected node
@@ -973,7 +973,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
   }
   if (cur.kind === 'marquee') {
     const r = rectFromPoints(cur.start, cur.cur);
-    overlays.push(<rect key="mq" x={r.x} y={r.y} width={r.w} height={r.h} fill="rgba(59,130,246,0.08)" stroke="#3b82f6" strokeWidth={hz} strokeDasharray={`${4 * hz} ${3 * hz}`} pointerEvents="none" />);
+    overlays.push(<rect key="mq" x={r.x} y={r.y} width={r.w} height={r.h} fill="rgba(58,167,109,0.08)" stroke="#3aa76d" strokeWidth={hz} strokeDasharray={`${4 * hz} ${3 * hz}`} pointerEvents="none" />);
   }
   if (cur.kind === 'box') {
     const r = rectFromPoints(cur.start, cur.cur);
@@ -988,7 +988,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     overlays.push(
       <path key="wp" d={roundedPath(preview, ws.radius)} fill="none" stroke={ws.color} strokeOpacity={0.75} strokeWidth={ws.width} strokeDasharray={`${6} ${4}`} strokeLinecap="round" pointerEvents="none" />,
     );
-    for (const p of cur.points) overlays.push(<circle key={`wpc-${p.x}-${p.y}`} cx={p.x} cy={p.y} r={3 * hz} fill="#3b82f6" pointerEvents="none" />);
+    for (const p of cur.points) overlays.push(<circle key={`wpc-${p.x}-${p.y}`} cx={p.x} cy={p.y} r={3 * hz} fill="#3aa76d" pointerEvents="none" />);
   }
 
   const gs = grid * zoom;

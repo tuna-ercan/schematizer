@@ -65,6 +65,9 @@ function loadInitial(): Partial<State> {
     if (s) {
       const j = JSON.parse(s);
       for (const k of ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'nodeStyle', 'fileName', 'dirty'] as const) if (j[k] !== undefined) (out as any)[k] = j[k];
+      // the default node color changed from blue to green; keep custom defaults
+      const ns = out.nodeStyle;
+      if (ns && ns.outerColor === '#2563eb' && ns.innerColor === '#ffffff' && ns.outerRadius === 4 && ns.innerRadius === 2.5) out.nodeStyle = { ...DEFAULT_NODE_STYLE };
     }
   } catch {
     /* ignore */

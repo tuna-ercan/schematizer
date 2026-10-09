@@ -102,7 +102,7 @@ export function WireView({ doc, w, interactive, selected, highlighted }: { doc: 
   return (
     <g data-kind={interactive ? 'wire' : undefined} data-id={w.id}>
       {(selected || highlighted) && (
-        <path d={roundedPath(full, w.radius)} fill="none" stroke={highlighted ? '#f59e0b' : '#3b82f6'} strokeOpacity={0.35} strokeWidth={w.width + 8} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={roundedPath(full, w.radius)} fill="none" stroke={highlighted ? '#f59e0b' : '#3aa76d'} strokeOpacity={0.35} strokeWidth={w.width + 8} strokeLinecap="round" strokeLinejoin="round" />
       )}
       <path d={d} fill="none" stroke={w.color} strokeWidth={w.width} strokeDasharray={dashArray(w.dash, w.width)} strokeLinecap="round" strokeLinejoin="round" />
       {w.arrowB && full.length >= 2 && arrowHead(full[full.length - 1], full[full.length - 2], size, w.color, 'ab')}
@@ -196,7 +196,7 @@ export function Scene({ doc, interactive = false, sel, highlight, hoverPort }: S
               {deg >= 3 && <circle cx={j.x} cy={j.y} r={r} fill={color} />}
               {interactive && deg < 3 && <circle cx={j.x} cy={j.y} r={3} fill="#fff" stroke={color} strokeWidth={1.5} />}
               {interactive && <circle cx={j.x} cy={j.y} r={7} fill="transparent" />}
-              {interactive && sel?.has(j.id) && <circle cx={j.x} cy={j.y} r={6} fill="none" stroke="#3b82f6" strokeWidth={1.5} />}
+              {interactive && sel?.has(j.id) && <circle cx={j.x} cy={j.y} r={6} fill="none" stroke="#3aa76d" strokeWidth={1.5} />}
             </g>
           );
         })}
@@ -214,8 +214,8 @@ export function Scene({ doc, interactive = false, sel, highlight, hoverPort }: S
             return (
               <g key={key} data-kind={interactive ? 'port' : undefined} data-obj={o.id} data-port={p.id} className="port">
                 {interactive && <circle cx={wp.x} cy={wp.y} r={Math.max(8, ns.outerRadius + 3)} fill="transparent" />}
-                {interactive && (hot || hl) && <circle cx={wp.x} cy={wp.y} r={ring} fill="none" stroke={hl ? '#f59e0b' : '#2563eb'} strokeWidth={2} strokeOpacity={0.6} />}
-                {interactive && !hot && !hl && <circle cx={wp.x} cy={wp.y} r={ring} fill="none" stroke="#2563eb" strokeWidth={2} strokeOpacity={0.6} className="port-hover" />}
+                {interactive && (hot || hl) && <circle cx={wp.x} cy={wp.y} r={ring} fill="none" stroke={hl ? '#f59e0b' : '#3aa76d'} strokeWidth={2} strokeOpacity={0.6} />}
+                {interactive && !hot && !hl && <circle cx={wp.x} cy={wp.y} r={ring} fill="none" stroke="#3aa76d" strokeWidth={2} strokeOpacity={0.6} className="port-hover" />}
                 {ns.outerRadius > 0 && <circle cx={wp.x} cy={wp.y} r={ns.outerRadius} fill={ns.outerColor} />}
                 {ns.innerRadius > 0 && <circle cx={wp.x} cy={wp.y} r={Math.min(ns.innerRadius, ns.outerRadius || ns.innerRadius)} fill={ns.innerColor} />}
               </g>

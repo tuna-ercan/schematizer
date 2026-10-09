@@ -4,8 +4,8 @@
   --border: #e2e8f0;
   --text: #0f172a;
   --muted: #64748b;
-  --accent: #2563eb;
-  --accent-soft: #dbeafe;
+  --accent: #2f9e66;
+  --accent-soft: #dcf3e6;
   --canvas-bg: #ffffff;
   --grid-minor: #f1f5f9;
   --grid-major: #e2e8f0;
@@ -41,7 +41,7 @@ button { font: inherit; color: inherit; }
   border: 1px solid transparent; border-radius: 6px; background: transparent; cursor: pointer; padding: 0 6px;
 }
 .tb-btn:hover:not(:disabled), .tb-text:hover { background: #f1f5f9; }
-.tb-btn.active { background: var(--accent-soft); color: var(--accent); border-color: #bfdbfe; }
+.tb-btn.active { background: var(--accent-soft); color: var(--accent); border-color: #b7e4c7; }
 .tb-btn:disabled { opacity: 0.35; cursor: default; }
 .tb-text.accent { color: var(--accent); font-weight: 600; }
 .tb-text.zoom { min-width: 52px; font-variant-numeric: tabular-nums; }
@@ -69,7 +69,7 @@ button { font: inherit; color: inherit; }
 .ruler-edge { stroke: var(--border); }
 .ruler-ticks line { stroke: #94a3b8; stroke-width: 1; shape-rendering: crispEdges; }
 .ruler-ticks text { fill: #64748b; font: 9px Inter, system-ui, sans-serif; user-select: none; }
-.ruler-sel { fill: rgba(59, 130, 246, 0.15); }
+.ruler-sel { fill: rgba(58, 167, 109, 0.18); }
 .ruler-cursor { stroke: #ef4444; stroke-width: 1; shape-rendering: crispEdges; }
 .ruler-corner {
   position: absolute; top: 0; left: 0; width: 20px; height: 20px; background: #f8fafc; pointer-events: auto;
@@ -98,7 +98,7 @@ button { font: inherit; color: inherit; }
   position: relative; display: flex; flex-direction: column; align-items: center; padding: 4px; border: 1px solid var(--border);
   border-radius: 8px; cursor: grab; background: #fff;
 }
-.lib-item:hover { border-color: #93c5fd; background: #f8fbff; }
+.lib-item:hover { border-color: #95d5b2; background: #f4fbf7; }
 .lib-name { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .lib-actions { position: absolute; top: 2px; right: 2px; display: none; gap: 2px; }
 .lib-item:hover .lib-actions { display: flex; }
@@ -115,7 +115,7 @@ button { font: inherit; color: inherit; }
 .prop-input {
   width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; font: inherit; background: #fff; color: var(--text);
 }
-.prop-input:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 2px var(--accent-soft); }
+.prop-input:focus { outline: none; border-color: #95d5b2; box-shadow: 0 0 0 2px var(--accent-soft); }
 textarea.prop-input { resize: vertical; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8px; }
 .grid2 .prop-label { width: 14px; }

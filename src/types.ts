@@ -40,7 +40,7 @@ export interface NodeStyle {
 }
 
 export const DEFAULT_NODE_STYLE: NodeStyle = {
-  outerColor: '#2563eb',
+  outerColor: '#3aa76d',
   innerColor: '#ffffff',
   outerRadius: 4,
   innerRadius: 2.5,
