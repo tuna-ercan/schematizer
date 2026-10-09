@@ -7,6 +7,7 @@ import { autoRoute, defaultPortLabelOffset, findPort, normalizeWire, reconcileWi
 import { eq, objBBox, portDir } from './geometry';
 import { align, deleteSelection, group, organize, rotateOrFlip, ungroup, zOrder } from './actions';
 import { resizeObject, applyMove } from './edit';
+import { NodeDot } from './Scene';
 
 // ---------------------------------------------------------------- live edit with grouped undo
 let editBase: Doc | null = null;
@@ -157,8 +158,7 @@ function NodeStyleEditor({ style, onChange }: { style: NodeStyle; onChange: (p: 
       <div className="node-preview">
         <svg width="44" height="44" viewBox="-22 -22 44 44">
           <line x1={-22} x2={0} y1={0} y2={0} stroke="#1f2937" strokeWidth={2} />
-          {style.outerRadius > 0 && <circle r={style.outerRadius * 2} fill={style.outerColor} />}
-          {style.innerRadius > 0 && <circle r={Math.min(style.innerRadius, style.outerRadius || style.innerRadius) * 2} fill={style.innerColor} />}
+          <NodeDot x={0} y={0} s={style} k={2} />
         </svg>
         <span className="muted">Preview (2×)</span>
       </div>
@@ -170,6 +170,9 @@ function NodeStyleEditor({ style, onChange }: { style: NodeStyle; onChange: (p: 
       </Row>
       <Row label="Inner color">
         <Color value={style.innerColor} onChange={(v) => onChange({ innerColor: v })} />
+      </Row>
+      <Row label="Inner opacity">
+        <Percent value={(style.innerAlpha ?? 1) * 100} onChange={(v) => onChange({ innerAlpha: Math.min(100, Math.max(0, v)) / 100 })} />
       </Row>
       <Row label="Inner radius">
         <Num value={style.innerRadius} min={0} max={30} step={0.5} onChange={(v) => onChange({ innerRadius: Math.max(0, v) })} />

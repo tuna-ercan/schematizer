@@ -1,8 +1,25 @@
 import React from 'react';
-import type { Dash, Doc, Obj, Port, Shape, Vec, Wire } from './types';
+import type { Dash, Doc, NodeStyle, Obj, Port, Shape, Vec, Wire } from './types';
 import { DEFAULT_NODE_STYLE } from './types';
 import { add, dist, mul, norm, objCenter, portWorld, roundedPath, sub } from './geometry';
 import { junctionDegree, wireFull } from './model';
+
+/**
+ * A node: the outer color is a ring around the inner disc (a full disc when the inner
+ * radius is 0), so a see-through inner color shows what is behind the node.
+ */
+export function NodeDot({ x, y, s, k = 1 }: { x: number; y: number; s: NodeStyle; k?: number }) {
+  const R = s.outerRadius * k;
+  const r = Math.min(s.innerRadius, s.outerRadius || s.innerRadius) * k;
+  const alpha = s.innerAlpha ?? 1;
+  return (
+    <>
+      {R > 0 && r <= 0 && <circle cx={x} cy={y} r={R} fill={s.outerColor} />}
+      {R > 0 && r > 0 && r < R && <circle cx={x} cy={y} r={(R + r) / 2} fill="none" stroke={s.outerColor} strokeWidth={R - r} />}
+      {r > 0 && alpha > 0 && <circle cx={x} cy={y} r={r} fill={s.innerColor} fillOpacity={alpha} />}
+    </>
+  );
+}
 
 export function dashArray(dash: Dash, width: number): string | undefined {
   const w = Math.max(width, 1);
@@ -216,8 +233,7 @@ export function Scene({ doc, interactive = false, sel, highlight, hoverPort }: S
                 {interactive && <circle cx={wp.x} cy={wp.y} r={Math.max(8, ns.outerRadius + 3)} fill="transparent" />}
                 {interactive && (hot || hl) && <circle cx={wp.x} cy={wp.y} r={ring} fill="none" stroke={hl ? '#f59e0b' : '#3aa76d'} strokeWidth={2} strokeOpacity={0.6} />}
                 {interactive && !hot && !hl && <circle cx={wp.x} cy={wp.y} r={ring} fill="none" stroke="#3aa76d" strokeWidth={2} strokeOpacity={0.6} className="port-hover" />}
-                {ns.outerRadius > 0 && <circle cx={wp.x} cy={wp.y} r={ns.outerRadius} fill={ns.outerColor} />}
-                {ns.innerRadius > 0 && <circle cx={wp.x} cy={wp.y} r={Math.min(ns.innerRadius, ns.outerRadius || ns.innerRadius)} fill={ns.innerColor} />}
+                <NodeDot x={wp.x} y={wp.y} s={ns} />
               </g>
             );
           }),

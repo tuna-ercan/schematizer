@@ -32,6 +32,8 @@ export interface Shape {
 export interface NodeStyle {
   outerColor: string;
   innerColor: string;
+  /** opacity of the inner color, 0..1 (missing on older drawings: 1) */
+  innerAlpha?: number;
   outerRadius: number;
   /** 0 = solid dot */
   innerRadius: number;
@@ -42,6 +44,7 @@ export interface NodeStyle {
 export const DEFAULT_NODE_STYLE: NodeStyle = {
   outerColor: '#3aa76d',
   innerColor: '#ffffff',
+  innerAlpha: 1,
   outerRadius: 4,
   innerRadius: 2.5,
   exportVisible: false,
