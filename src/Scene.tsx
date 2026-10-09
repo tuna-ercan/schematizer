@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Dash, Doc, Obj, Port, Shape, Vec, Wire } from './types';
+import { DEFAULT_NODE_STYLE } from './types';
 import { add, dist, mul, norm, objCenter, portWorld, roundedPath, sub } from './geometry';
 import { junctionDegree, wireFull } from './model';
 
@@ -200,24 +201,28 @@ export function Scene({ doc, interactive = false, sel, highlight, hoverPort }: S
           );
         })}
       </g>
-      {interactive && (
-        <g className="layer-ports">
-          {objs.map((o) =>
-            o.ports.map((p) => {
-              const wp = portWorld(o, p);
-              const key = `${o.id}:${p.id}`;
-              const hot = hoverPort === key;
-              const hl = highlight?.keys.has(`p:${o.id}:${p.id}`);
-              return (
-                <g key={key} data-kind="port" data-obj={o.id} data-port={p.id} className="port">
-                  <circle cx={wp.x} cy={wp.y} r={8} fill="transparent" />
-                  <circle cx={wp.x} cy={wp.y} r={hot ? 5 : 3.5} fill={hl ? '#f59e0b' : hot ? '#2563eb' : '#fff'} stroke="#2563eb" strokeWidth={1.5} className="port-dot" />
-                </g>
-              );
-            }),
-          )}
-        </g>
-      )}
+      <g className="layer-ports">
+        {objs.map((o) =>
+          o.ports.map((p) => {
+            const ns = p.style ?? DEFAULT_NODE_STYLE;
+            if (!interactive && !ns.exportVisible) return null;
+            const wp = portWorld(o, p);
+            const key = `${o.id}:${p.id}`;
+            const hot = hoverPort === key;
+            const hl = highlight?.keys.has(`p:${o.id}:${p.id}`);
+            const ring = ns.outerRadius + 2.5;
+            return (
+              <g key={key} data-kind={interactive ? 'port' : undefined} data-obj={o.id} data-port={p.id} className="port">
+                {interactive && <circle cx={wp.x} cy={wp.y} r={Math.max(8, ns.outerRadius + 3)} fill="transparent" />}
+                {interactive && (hot || hl) && <circle cx={wp.x} cy={wp.y} r={ring} fill="none" stroke={hl ? '#f59e0b' : '#2563eb'} strokeWidth={2} strokeOpacity={0.6} />}
+                {interactive && !hot && !hl && <circle cx={wp.x} cy={wp.y} r={ring} fill="none" stroke="#2563eb" strokeWidth={2} strokeOpacity={0.6} className="port-hover" />}
+                {ns.outerRadius > 0 && <circle cx={wp.x} cy={wp.y} r={ns.outerRadius} fill={ns.outerColor} />}
+                {ns.innerRadius > 0 && <circle cx={wp.x} cy={wp.y} r={Math.min(ns.innerRadius, ns.outerRadius || ns.innerRadius)} fill={ns.innerColor} />}
+              </g>
+            );
+          }),
+        )}
+      </g>
       <g className="layer-labels">
         {objs.map((o) => (
           <React.Fragment key={o.id}>

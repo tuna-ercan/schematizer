@@ -375,6 +375,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         const o = s.doc.objects[objId];
         const lp = portLocalAt(o, m, s.grid, s.snap);
         const p = newPort(o, lp, nextPortName(o));
+        p.style = { ...s.nodeStyle };
         s.commit((d) => void d.objects[objId].ports.push(p));
         s.select([], { obj: objId, port: p.id });
         return;

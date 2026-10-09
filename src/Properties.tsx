@@ -1,7 +1,8 @@
 import React from 'react';
 import { produce } from 'immer';
 import { useStore } from './store';
-import type { Dash, Doc, Shape, WireStyle } from './types';
+import type { Dash, Doc, NodeStyle, Shape, WireStyle } from './types';
+import { DEFAULT_NODE_STYLE } from './types';
 import { autoRoute, defaultPortLabelOffset, findPort, normalizeWire, reconcileWires } from './model';
 import { eq, objBBox, portDir } from './geometry';
 import { align, deleteSelection, group, organize, rotateOrFlip, ungroup, zOrder } from './actions';
@@ -149,6 +150,37 @@ function WireStyleEditor({ style, onChange }: { style: WireStyle; onChange: (p: 
   );
 }
 
+// ---------------------------------------------------------------- node style editor
+function NodeStyleEditor({ style, onChange }: { style: NodeStyle; onChange: (p: Partial<NodeStyle>) => void }) {
+  return (
+    <>
+      <div className="node-preview">
+        <svg width="44" height="44" viewBox="-22 -22 44 44">
+          <line x1={-22} x2={0} y1={0} y2={0} stroke="#1f2937" strokeWidth={2} />
+          {style.outerRadius > 0 && <circle r={style.outerRadius * 2} fill={style.outerColor} />}
+          {style.innerRadius > 0 && <circle r={Math.min(style.innerRadius, style.outerRadius || style.innerRadius) * 2} fill={style.innerColor} />}
+        </svg>
+        <span className="muted">Preview (2×)</span>
+      </div>
+      <Row label="Outer color">
+        <Color value={style.outerColor} onChange={(v) => onChange({ outerColor: v })} />
+      </Row>
+      <Row label="Outer radius">
+        <Num value={style.outerRadius} min={0} max={30} step={0.5} onChange={(v) => onChange({ outerRadius: Math.max(0, v) })} />
+      </Row>
+      <Row label="Inner color">
+        <Color value={style.innerColor} onChange={(v) => onChange({ innerColor: v })} />
+      </Row>
+      <Row label="Inner radius">
+        <Num value={style.innerRadius} min={0} max={30} step={0.5} onChange={(v) => onChange({ innerRadius: Math.max(0, v) })} />
+      </Row>
+      <Row label="Export">
+        <Check label="show in SVG/PNG" value={style.exportVisible} onChange={(v) => onChange({ exportVisible: v })} />
+      </Row>
+    </>
+  );
+}
+
 // ---------------------------------------------------------------- shape editor
 function ShapeEditor({ objId, shape }: { objId: string; shape: Shape }) {
   const upd = (p: Partial<Shape>) =>
@@ -259,6 +291,7 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
           reconcileWires(before, d, s.grid);
         });
       };
+      const nodeStyle = r.p.style ?? DEFAULT_NODE_STYLE;
       const wires = Object.values(doc.wires).filter(
         (w) => (w.a.kind === 'port' && w.a.obj === r.o.id && w.a.port === r.p.id) || (w.b.kind === 'port' && w.b.obj === r.o.id && w.b.port === r.p.id),
       ).length;
@@ -294,6 +327,25 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
             <p className="muted">
               Of object “{r.o.label || 'unnamed'}” · {wires} connection{wires === 1 ? '' : 's'}. Nodes with the same net label are connected without a wire.
             </p>
+          </Section>
+          <Section title="Node style">
+            <NodeStyleEditor style={nodeStyle} onChange={(p) => upd({ style: { ...nodeStyle, ...p } })} />
+            <div className="prop-actions">
+              <button
+                className="small-btn"
+                title="Give every node on this object the same style"
+                onClick={() =>
+                  s.commit((d) => {
+                    for (const port of d.objects[selPort.obj]?.ports ?? []) port.style = { ...nodeStyle };
+                  })
+                }
+              >
+                Apply to all nodes of object
+              </button>
+              <button className="small-btn" title="New nodes will use this style" onClick={() => s.set({ nodeStyle: { ...nodeStyle } })}>
+                Use as default
+              </button>
+            </div>
           </Section>
         </aside>
       );
@@ -468,6 +520,9 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
     <aside className="props">
       <Section title="New connections">
         <WireStyleEditor style={s.wireStyle} onChange={(p) => s.set({ wireStyle: { ...s.wireStyle, ...p } })} />
+      </Section>
+      <Section title="New nodes">
+        <NodeStyleEditor style={s.nodeStyle} onChange={(p) => s.set({ nodeStyle: { ...s.nodeStyle, ...p } })} />
       </Section>
       <Section title="Canvas">
         <Row label="Grid size">

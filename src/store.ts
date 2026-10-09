@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { produce, setAutoFreeze } from 'immer';
-import type { Doc, Tool, Vec, WireStyle } from './types';
-import { emptyDoc } from './types';
+import type { Doc, NodeStyle, Tool, Vec, WireStyle } from './types';
+import { DEFAULT_NODE_STYLE, emptyDoc } from './types';
 import { defaultWireStyle } from './model';
 
 setAutoFreeze(false);
@@ -27,6 +27,8 @@ export interface State {
   pan: Vec;
   zoom: number;
   wireStyle: WireStyle;
+  /** style for newly created nodes */
+  nodeStyle: NodeStyle;
   highlight: { wires: Set<string>; keys: Set<string> } | null;
   fileName: string;
   /** unsaved changes since the last save / open */
@@ -62,7 +64,7 @@ function loadInitial(): Partial<State> {
     const s = localStorage.getItem(LS_SETTINGS);
     if (s) {
       const j = JSON.parse(s);
-      for (const k of ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'fileName', 'dirty'] as const) if (j[k] !== undefined) (out as any)[k] = j[k];
+      for (const k of ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'nodeStyle', 'fileName', 'dirty'] as const) if (j[k] !== undefined) (out as any)[k] = j[k];
     }
   } catch {
     /* ignore */
@@ -88,6 +90,7 @@ export const useStore = create<State>((set, get) => ({
   pan: { x: 0, y: 0 },
   zoom: 1,
   wireStyle: { ...defaultWireStyle },
+  nodeStyle: { ...DEFAULT_NODE_STYLE },
   highlight: null,
   fileName: 'untitled',
   dirty: false,
@@ -138,7 +141,7 @@ useStore.subscribe((s, prev) => {
       }
     }, 400);
   }
-  const keys = ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'fileName', 'dirty'] as const;
+  const keys = ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'nodeStyle', 'fileName', 'dirty'] as const;
   if (keys.some((k) => s[k] !== prev[k])) {
     try {
       const out: Record<string, unknown> = {};

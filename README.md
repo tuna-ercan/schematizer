@@ -35,6 +35,7 @@ Your drawing is autosaved in the browser. **Save** (Ctrl+S) writes a `.schematiz
 | Move a wire segment or corner | Select the wire, then drag the segment or the square handle |
 | Organize wires | **Organize** button. Re-routes the selected wires (or all wires, if nothing is selected) to avoid objects, labels and crossings |
 | Orthogonal lock | Toolbar button or O. When on, wires use only horizontal and vertical segments |
+| Node style | Select a node to set its outer/inner color and radius (inner radius 0 = solid dot), and whether it shows in exports. Apply it to all nodes of the object, or make it the default for new nodes |
 | Wire style | Select a wire to set color, thickness, dash style, corner radius and arrows. "Use as default" applies that style to new wires |
 | Copy / paste with connections | Ctrl+C / Ctrl+V pastes at the mouse. Wires between copied objects are copied too |
 | Build your own part | Box (B), Line (L) and Text (T) tools, then select the pieces → Ctrl+G to group, add nodes, right-click → *Add to library* |

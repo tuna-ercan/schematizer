@@ -28,6 +28,25 @@ export interface Shape {
   textColor: string;
 }
 
+/** How a node is drawn: an outer disc with an inner disc on top. */
+export interface NodeStyle {
+  outerColor: string;
+  innerColor: string;
+  outerRadius: number;
+  /** 0 = solid dot */
+  innerRadius: number;
+  /** also draw the node in SVG / PNG exports */
+  exportVisible: boolean;
+}
+
+export const DEFAULT_NODE_STYLE: NodeStyle = {
+  outerColor: '#2563eb',
+  innerColor: '#ffffff',
+  outerRadius: 4,
+  innerRadius: 2.5,
+  exportVisible: false,
+};
+
 /** A named connection point ("node") of an object. */
 export interface Port {
   id: string;
@@ -40,6 +59,8 @@ export interface Port {
   showLabel: boolean;
   /** label position relative to the port's world position */
   labelOffset: Vec;
+  /** missing on older drawings: DEFAULT_NODE_STYLE */
+  style?: NodeStyle;
 }
 
 export interface Obj {

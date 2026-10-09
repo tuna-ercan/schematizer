@@ -54,7 +54,8 @@ button { font: inherit; color: inherit; }
 .canvas [data-kind="port"] { cursor: crosshair; }
 .canvas [data-kind="junction"] { cursor: crosshair; }
 .canvas.tool-node [data-kind="object"] { cursor: copy; }
-.port:hover .port-dot { fill: #2563eb; }
+.port .port-hover { opacity: 0; }
+.port:hover .port-hover { opacity: 1; }
 .hint {
   position: absolute; left: 12px; bottom: 10px; right: 12px; pointer-events: none;
   color: var(--muted); font-size: 12px; text-shadow: 0 0 4px #fff, 0 0 4px #fff;
@@ -137,6 +138,8 @@ textarea.prop-input { resize: vertical; }
 .port-row { display: flex; gap: 4px; margin: 4px 0; }
 .muted { color: var(--muted); font-size: 12px; line-height: 1.45; margin: 6px 0 0; }
 .muted.small { font-size: 11px; }
+.node-preview { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.node-preview svg { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; }
 .swatches { display: flex; gap: 4px; margin-top: 6px; }
 .swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--border); cursor: pointer; padding: 0; }
 

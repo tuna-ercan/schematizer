@@ -34,7 +34,7 @@ export function Toolbar({ onHelp }: { onHelp: () => void }) {
   return (
     <div className="toolbar">
       <div className="brand">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#52b788" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="5" width="7" height="7" rx="1.5" />
           <rect x="15" y="12" width="7" height="7" rx="1.5" />
           <path d="M9 8.5h3a2 2 0 012 2v3a2 2 0 002 2" />

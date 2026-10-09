@@ -209,6 +209,7 @@ export function zoomBy(f: number) {
 export function addObject(o: Obj) {
   S().commit((d) => {
     o.label = nextLabel(d, o.label, o.id);
+    for (const p of o.ports) p.style ??= { ...S().nodeStyle };
     d.objects[o.id] = o;
     d.order.push(o.id);
   });
