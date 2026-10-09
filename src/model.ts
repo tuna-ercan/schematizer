@@ -191,6 +191,8 @@ export function normalizeWire(doc: Doc, w: Wire) {
  * same delta) are shifted by `delta`; other affected wires stretch their end segments.
  */
 export function reconcileWires(orig: Doc, next: Doc, grid: number, delta: Vec | null = null, translateWires: Set<string> = new Set()) {
+  const sameDir = (p: Vec | null, q: Vec | null) => (!p && !q) || (!!p && !!q && eq(p, q));
+  const reroute: string[] = [];
   for (const id in next.wires) {
     const w = next.wires[id];
     const ow = orig.wires[id];
@@ -202,10 +204,21 @@ export function reconcileWires(orig: Doc, next: Doc, grid: number, delta: Vec | 
     if (!aMoved && !bMoved && !translate) continue;
     let corners = ow.points.map((p) => (translate ? { x: p.x + delta!.x, y: p.y + delta!.y } : { ...p }));
     if (w.ortho) {
+      // a node now pointing another way (rotate / flip / moved to another side): stretching would
+      // make the wire leave the node sideways, so route it again instead
+      if (!sameDir(endpointDir(orig, ow.a), endpointDir(next, w.a)) || !sameDir(endpointDir(orig, ow.b), endpointDir(next, w.b))) {
+        reroute.push(id);
+        continue;
+      }
       const origFull = [oa, ...ow.points, ob];
       corners = orthoStretch(origFull, na, nb, corners, endpointDir(next, w.a), endpointDir(next, w.b), grid);
     }
     w.points = corners;
+  }
+  // after the other wires are in place, so the router sees where they are
+  for (const id of reroute) {
+    const w = next.wires[id];
+    w.points = autoRoute(next, w.a, w.b, new Set([id]), grid);
   }
 }
 
