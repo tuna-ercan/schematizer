@@ -157,7 +157,7 @@ function NodeStyleEditor({ style, onChange }: { style: NodeStyle; onChange: (p: 
     <>
       <div className="node-preview">
         <svg width="44" height="44" viewBox="-22 -22 44 44">
-          <line x1={-22} x2={0} y1={0} y2={0} stroke="#1f2937" strokeWidth={2} />
+          <line x1={-22} x2={-style.outerRadius * 2} y1={0} y2={0} stroke="#1f2937" strokeWidth={2} />
           <NodeDot x={0} y={0} s={style} k={2} />
         </svg>
         <span className="muted">Preview (2×)</span>

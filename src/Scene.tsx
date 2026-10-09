@@ -1,8 +1,8 @@
 import React from 'react';
-import type { Dash, Doc, NodeStyle, Obj, Port, Shape, Vec, Wire } from './types';
+import type { Dash, Doc, Endpoint, NodeStyle, Obj, Port, Shape, Vec, Wire } from './types';
 import { DEFAULT_NODE_STYLE } from './types';
 import { add, dist, mul, norm, objCenter, portWorld, roundedPath, sub } from './geometry';
-import { junctionDegree, wireFull } from './model';
+import { findPort, junctionDegree, wireFull } from './model';
 
 /**
  * A node: the outer color is a ring around the inner disc (a full disc when the inner
@@ -50,7 +50,23 @@ function TextLines({ text, x, y, fontSize, color, anchor = 'middle' }: { text: s
   );
 }
 
-export function ShapeView({ s }: { s: Shape }) {
+/** A node position (object-local) and the radius that lines ending there should stop at. */
+type Stop = { x: number; y: number; r: number };
+
+/** Shorten an open polyline whose end sits on a node, so it stops at the node's outer ring. */
+function trimToStops(pts: Vec[], stops: Stop[]): Vec[] {
+  if (pts.length < 2 || !stops.length) return pts;
+  const out = pts.map((p) => ({ ...p }));
+  const cut = (i: number, j: number) => {
+    const st = stops.find((q) => Math.abs(q.x - out[i].x) < 0.5 && Math.abs(q.y - out[i].y) < 0.5);
+    if (st && st.r > 0 && dist(out[i], out[j]) > st.r) out[i] = add(out[i], mul(norm(sub(out[j], out[i])), st.r));
+  };
+  cut(0, 1);
+  cut(out.length - 1, out.length - 2);
+  return out;
+}
+
+export function ShapeView({ s, stops = [] }: { s: Shape; stops?: Stop[] }) {
   const common = {
     stroke: s.stroke,
     strokeWidth: s.strokeWidth,
@@ -59,7 +75,8 @@ export function ShapeView({ s }: { s: Shape }) {
     strokeLinejoin: 'round' as const,
   };
   if (s.kind === 'poly') {
-    const pts = (s.points ?? []).map((p) => `${p.x},${p.y}`).join(' ');
+    const raw = s.points ?? [];
+    const pts = (s.closed ? raw : trimToStops(raw, stops)).map((p) => `${p.x},${p.y}`).join(' ');
     return s.closed ? <polygon points={pts} fill={s.fill} {...common} /> : <polyline points={pts} fill={s.fill === 'none' ? 'none' : s.fill} {...common} />;
   }
   const cx = s.x + s.w / 2, cy = s.y + s.h / 2;
@@ -82,11 +99,16 @@ export function objTransform(o: Obj) {
 }
 
 export function ObjectBody({ o, interactive }: { o: Obj; interactive: boolean }) {
+  // lines of the drawing that end on a visible node stop at its outer ring
+  const stops: Stop[] = o.ports.flatMap((p) => {
+    const ns = p.style ?? DEFAULT_NODE_STYLE;
+    return interactive || ns.exportVisible ? [{ x: p.x, y: p.y, r: ns.outerRadius }] : [];
+  });
   return (
     <g transform={objTransform(o)} data-kind={interactive ? 'object' : undefined} data-id={o.id}>
       {interactive && <rect x={-3} y={-3} width={o.w + 6} height={o.h + 6} fill="transparent" />}
       {o.shapes.map((s) => (
-        <ShapeView key={s.id} s={s} />
+        <ShapeView key={s.id} s={s} stops={stops} />
       ))}
     </g>
   );
@@ -104,7 +126,21 @@ function arrowHead(tip: Vec, from: Vec, size: number, color: string, key: string
 export function WireView({ doc, w, interactive, selected, highlighted }: { doc: Doc; w: Wire; interactive: boolean; selected?: boolean; highlighted?: boolean }) {
   const full = wireFull(doc, w);
   const size = 6 + w.width * 2;
-  const pts = full.map((p) => ({ ...p }));
+  // the drawn line stops at the outer ring of a node (where that node is drawn)
+  const ends = full.map((p) => ({ ...p }));
+  const trim = (ep: Endpoint) => {
+    if (ep.kind !== 'port') return 0;
+    const r = findPort(doc, ep.obj, ep.port);
+    const ns = r?.p.style ?? DEFAULT_NODE_STYLE;
+    return r && (interactive || ns.exportVisible) ? ns.outerRadius : 0;
+  };
+  if (ends.length >= 2) {
+    const n = ends.length;
+    const ta = trim(w.a), tb = trim(w.b);
+    if (ta > 0 && dist(ends[0], ends[1]) > ta) ends[0] = add(ends[0], mul(norm(sub(ends[1], ends[0])), ta));
+    if (tb > 0 && dist(ends[n - 1], ends[n - 2]) > tb) ends[n - 1] = add(ends[n - 1], mul(norm(sub(ends[n - 2], ends[n - 1])), tb));
+  }
+  const pts = ends.map((p) => ({ ...p }));
   // shorten the line under arrowheads so the stroke does not poke through the tip
   if (w.arrowB && pts.length >= 2) {
     const n = pts.length;
@@ -122,8 +158,8 @@ export function WireView({ doc, w, interactive, selected, highlighted }: { doc: 
         <path d={roundedPath(full, w.radius)} fill="none" stroke={highlighted ? '#f59e0b' : '#3aa76d'} strokeOpacity={0.35} strokeWidth={w.width + 8} strokeLinecap="round" strokeLinejoin="round" />
       )}
       <path d={d} fill="none" stroke={w.color} strokeWidth={w.width} strokeDasharray={dashArray(w.dash, w.width)} strokeLinecap="round" strokeLinejoin="round" />
-      {w.arrowB && full.length >= 2 && arrowHead(full[full.length - 1], full[full.length - 2], size, w.color, 'ab')}
-      {w.arrowA && full.length >= 2 && arrowHead(full[0], full[1], size, w.color, 'aa')}
+      {w.arrowB && ends.length >= 2 && arrowHead(ends[ends.length - 1], ends[ends.length - 2], size, w.color, 'ab')}
+      {w.arrowA && ends.length >= 2 && arrowHead(ends[0], ends[1], size, w.color, 'aa')}
       {interactive &&
         full.slice(0, -1).map((p, i) => (
           <line key={i} data-seg={i} x1={p.x} y1={p.y} x2={full[i + 1].x} y2={full[i + 1].y} stroke="transparent" strokeWidth={Math.max(10, w.width + 8)} strokeLinecap="round" />
