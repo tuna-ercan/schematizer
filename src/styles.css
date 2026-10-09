@@ -28,6 +28,8 @@ button { font: inherit; color: inherit; }
   background: var(--panel); border-bottom: 1px solid var(--border); flex-wrap: wrap; user-select: none;
 }
 .brand { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 15px; margin-right: 4px; }
+.file-box { display: inline-flex; align-items: center; gap: 2px; }
+.dirty-dot { width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; flex: none; }
 .file-name {
   border: 1px solid transparent; border-radius: 6px; padding: 4px 6px; width: 120px; font: inherit; color: var(--muted); background: transparent;
 }

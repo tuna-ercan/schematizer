@@ -29,6 +29,10 @@ export interface State {
   wireStyle: WireStyle;
   highlight: { wires: Set<string>; keys: Set<string> } | null;
   fileName: string;
+  /** unsaved changes since the last save / open */
+  dirty: boolean;
+  /** name of the file on disk that Save overwrites */
+  linkedFile: string | null;
 
   /** apply a change with undo history */
   commit: (fn: (d: Doc) => void) => void;
@@ -58,7 +62,7 @@ function loadInitial(): Partial<State> {
     const s = localStorage.getItem(LS_SETTINGS);
     if (s) {
       const j = JSON.parse(s);
-      for (const k of ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'fileName'] as const) if (j[k] !== undefined) (out as any)[k] = j[k];
+      for (const k of ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'fileName', 'dirty'] as const) if (j[k] !== undefined) (out as any)[k] = j[k];
     }
   } catch {
     /* ignore */
@@ -86,6 +90,8 @@ export const useStore = create<State>((set, get) => ({
   wireStyle: { ...defaultWireStyle },
   highlight: null,
   fileName: 'untitled',
+  dirty: false,
+  linkedFile: null,
   ...loadInitial(),
 
   commit: (fn) => {
@@ -119,6 +125,7 @@ let saveTimer: number | undefined;
 let warned = false;
 useStore.subscribe((s, prev) => {
   if (s.doc !== prev.doc) {
+    if (!s.dirty) useStore.setState({ dirty: true });
     clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
       try {
@@ -131,7 +138,7 @@ useStore.subscribe((s, prev) => {
       }
     }, 400);
   }
-  const keys = ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'fileName'] as const;
+  const keys = ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'fileName', 'dirty'] as const;
   if (keys.some((k) => s[k] !== prev[k])) {
     try {
       const out: Record<string, unknown> = {};

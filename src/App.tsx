@@ -6,7 +6,7 @@ import { Library } from './Library';
 import { ContextMenu, type MenuItem } from './ContextMenu';
 import { useStore } from './store';
 import { addImageFile, align, copyToClip, lastClipText, deleteSelection, duplicate, group, pasteFromText, rotateOrFlip, selectAll, ungroup, zOrder, zoomBy, zoomToFit } from './actions';
-import { saveProject } from './io';
+import { openFile, restoreFileHandle, saveFile } from './files';
 import { loadUserSymbols, saveUserSymbols, type LibSymbol } from './symbols';
 import { groupObjects, uid } from './model';
 import { applyMove } from './edit';
@@ -67,7 +67,8 @@ export function App() {
         else if (k === 'd') duplicate();
         else if (k === 'g' && e.shiftKey) ungroup();
         else if (k === 'g') group();
-        else if (k === 's') saveProject(s.doc, s.fileName);
+        else if (k === 's') saveFile(e.shiftKey);
+        else if (k === 'o') openFile().then((ok) => ok || document.querySelector<HTMLInputElement>('input[type=file][accept^=".json"]')?.click());
         else if (k === '0') zoomBy(1 / s.zoom);
         else if (k === '=' || k === '+') zoomBy(1.2);
         else if (k === '-') zoomBy(1 / 1.2);
@@ -156,6 +157,10 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    restoreFileHandle();
+  }, []);
+
+  useEffect(() => {
     // center the origin on first load
     const s = useStore.getState();
     if (s.doc.order.length) setTimeout(zoomToFit);
@@ -212,7 +217,8 @@ const shortcuts: [string, string][] = [
   ['Ctrl+R / Ctrl+;', 'Show/hide rulers / guides'],
   ['Drag from a ruler', 'Create a guide (drag it back onto the ruler to delete)'],
   ['Ctrl+Z / Ctrl+Y', 'Undo / redo'],
-  ['Ctrl+S', 'Save project file'],
+  ['Ctrl+S / Ctrl+Shift+S', 'Save (overwrites the open file) / Save as a new file'],
+  ['Ctrl+O', 'Open a project file'],
   ['Arrows (Shift)', 'Nudge selection'],
   ['Wheel / Space+drag / middle drag', 'Zoom / pan'],
   ['Shift+1', 'Zoom to fit'],

@@ -13,7 +13,9 @@ npm run dev
 
 Then open http://localhost:5173.
 
-Your drawing is autosaved in the browser. Use **Save** / **Open** for `.schematizer.json` project files, and **SVG** / **PNG** to export.
+Your drawing is autosaved in the browser. **Save** (Ctrl+S) writes a `.schematizer.json` project file: the first time it asks where to save, and later saves overwrite that same file. This also applies to a file you opened. **Save As** (Ctrl+Shift+S) saves to a new file. An orange dot next to the file name means there are unsaved changes. Use **SVG** / **PNG** to export images.
+
+> Overwriting files needs Chrome or Edge. In other browsers, Save downloads a new copy each time.
 
 ## How to use
 

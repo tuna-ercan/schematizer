@@ -3,8 +3,8 @@ import { useStore } from './store';
 import type { Tool } from './types';
 import { Icons } from './icons';
 import { addImageFile, align, deleteSelection, group, organize, rotateOrFlip, ungroup, zoomBy, zoomToFit } from './actions';
-import { exportPng, exportSvg, parseProject, saveProject } from './io';
-import { emptyDoc } from './types';
+import { exportPng, exportSvg } from './io';
+import { fileApiSupported, newFile, openFile, openFromInput, saveFile } from './files';
 
 const tools: { id: Tool; label: string; key: string }[] = [
   { id: 'select', label: 'Select', key: 'V' },
@@ -41,27 +41,26 @@ export function Toolbar({ onHelp }: { onHelp: () => void }) {
         </svg>
         <span>Schematizer</span>
       </div>
-      <input
-        className="file-name"
-        value={s.fileName}
-        onChange={(e) => s.set({ fileName: e.target.value })}
-        title="File name"
-        spellCheck={false}
-      />
+      <span className="file-box" title={s.linkedFile ? `Saving to ${s.linkedFile}` : 'Not saved to a file yet'}>
+        <input className="file-name" value={s.fileName} onChange={(e) => s.set({ fileName: e.target.value })} spellCheck={false} />
+        {s.dirty && <span className="dirty-dot" title="Unsaved changes" />}
+      </span>
       <div className="tb-group">
-        <button
-          className="tb-text"
-          onClick={() => {
-            if (confirm('Start a new drawing? Unsaved changes will be lost.')) s.loadDoc(emptyDoc(), 'untitled');
-          }}
-        >
+        <button className="tb-text" onClick={newFile}>
           New
         </button>
-        <button className="tb-text" onClick={() => openRef.current?.click()}>
+        <button className="tb-text" title="Open (Ctrl+O)" onClick={async () => (await openFile()) || openRef.current?.click()}>
           Open
         </button>
-        <button className="tb-text" onClick={() => saveProject(s.doc, s.fileName)} title="Save (Ctrl+S)">
+        <button
+          className="tb-text"
+          onClick={() => saveFile()}
+          title={fileApiSupported ? `Save (Ctrl+S)${s.linkedFile ? ` – overwrites ${s.linkedFile}` : ''}` : 'Save (Ctrl+S) – downloads a copy (this browser cannot overwrite files)'}
+        >
           Save
+        </button>
+        <button className="tb-text" onClick={() => saveFile(true)} title="Save as a new file (Ctrl+Shift+S)">
+          Save As
         </button>
         <button className="tb-text" onClick={() => exportSvg(s.doc, s.fileName)}>
           SVG
@@ -166,14 +165,7 @@ export function Toolbar({ onHelp }: { onHelp: () => void }) {
         onChange={async (e) => {
           const f = e.target.files?.[0];
           e.target.value = '';
-          if (!f) return;
-          try {
-            const doc = parseProject(await f.text());
-            s.loadDoc(doc, f.name.replace(/\.schematizer\.json$|\.json$/i, ''));
-            setTimeout(zoomToFit);
-          } catch (err: any) {
-            alert(`Could not open file: ${err.message}`);
-          }
+          if (f) await openFromInput(f);
         }}
       />
     </div>

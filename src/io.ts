@@ -16,11 +16,6 @@ export function downloadBlob(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export function saveProject(doc: Doc, name: string) {
-  const data = JSON.stringify({ app: 'schematizer', version: 1, doc }, null, 1);
-  downloadBlob(new Blob([data], { type: 'application/json' }), `${name || 'untitled'}.schematizer.json`);
-}
-
 export function parseProject(text: string): Doc {
   const j = JSON.parse(text);
   const doc = j.doc ?? j;
