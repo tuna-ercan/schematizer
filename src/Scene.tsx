@@ -127,7 +127,7 @@ export function WireView({ doc, w, interactive, selected, highlighted }: { doc: 
   const full = wireFull(doc, w);
   const size = 6 + w.width * 2;
   // the drawn line stops at the outer ring of a node (where that node is drawn)
-  const ends = full.map((p) => ({ ...p }));
+  const ends = full.filter((p, i) => i === 0 || dist(p, full[i - 1]) > 0.01).map((p) => ({ ...p }));
   const trim = (ep: Endpoint) => {
     if (ep.kind !== 'port') return 0;
     const r = findPort(doc, ep.obj, ep.port);

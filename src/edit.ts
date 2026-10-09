@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import type { Doc, Obj, Rect, Vec } from './types';
 import { add, eq, objBBox, objCenter, portDir, projectOnSegment, snapN, snapV, worldToLocal } from './geometry';
-import { defaultPortLabelOffset, endpointPos, reconcileWires, segOrients, wireFull } from './model';
+import { defaultPortLabelOffset, endpointPos, reconcileWires, segOrients, wireFull, type Orient } from './model';
 
 /** Move objects / junctions / wire bodies by `delta`, stretching attached wires. */
 export function applyMove(orig: Doc, objs: Set<string>, juncs: Set<string>, wires: Set<string>, delta: Vec, grid: number): Doc {
@@ -31,33 +31,62 @@ export function dragCorner(orig: Doc, wireId: string, idx: number, m: Vec, grid:
     const k = idx + 1;
     const pts = full.map((p) => ({ ...p }));
     pts[k] = { ...m };
+    const last = pts.length - 1;
+    const same = (a: number, b: number) => Math.abs(a - b) < 0.01;
+    const flip = (x: Orient): Orient => (x === 'h' ? 'v' : 'h');
+    // a midpoint for an inserted step, on the grid unless that would make a zero-length piece
+    const mid = (a: number, b: number) => {
+      const v = snapN((a + b) / 2, grid);
+      return same(v, a) || same(v, b) ? (a + b) / 2 : v;
+    };
     let insertBefore: Vec[] = [];
     let insertAfter: Vec[] = [];
-    // previous side
+
+    // previous side: which way does the piece arriving at the dragged corner run now?
+    let prevO: Orient;
     if (k - 1 === 0) {
       const P = pts[0];
-      if (o[0] === 'h' && Math.abs(P.y - m.y) > 0.01) {
-        const xm = snapN((P.x + m.x) / 2, grid);
+      if (same(P.y, m.y) && !same(P.x, m.x)) prevO = 'h'; // corner level with the node: leave it horizontally
+      else if (same(P.x, m.x) && !same(P.y, m.y)) prevO = 'v'; // corner above/below the node: leave it vertically
+      else if (same(P.x, m.x)) prevO = o[0];
+      else if (o[0] === 'h') {
+        const xm = mid(P.x, m.x);
         insertBefore = [{ x: xm, y: P.y }, { x: xm, y: m.y }];
-      } else if (o[0] === 'v' && Math.abs(P.x - m.x) > 0.01) {
-        const ym = snapN((P.y + m.y) / 2, grid);
+        prevO = 'h';
+      } else {
+        const ym = mid(P.y, m.y);
         insertBefore = [{ x: P.x, y: ym }, { x: m.x, y: ym }];
+        prevO = 'v';
       }
-    } else if (o[k - 1] === 'h') pts[k - 1].y = m.y;
-    else pts[k - 1].x = m.x;
-    // next side
-    const last = pts.length - 1;
+    } else {
+      prevO = o[k - 1];
+      if (prevO === 'h') pts[k - 1].y = m.y;
+      else pts[k - 1].x = m.x;
+    }
+
+    // next side: it has to turn, i.e. run the other way
+    const want = flip(prevO);
     if (k + 1 === last) {
-      const P = pts[last];
-      if (o[k] === 'h' && Math.abs(P.y - m.y) > 0.01) {
-        const xm = snapN((P.x + m.x) / 2, grid);
-        insertAfter = [{ x: xm, y: m.y }, { x: xm, y: P.y }];
-      } else if (o[k] === 'v' && Math.abs(P.x - m.x) > 0.01) {
-        const ym = snapN((P.y + m.y) / 2, grid);
-        insertAfter = [{ x: m.x, y: ym }, { x: P.x, y: ym }];
+      const E = pts[last];
+      const aligned = want === 'h' ? same(E.y, m.y) : same(E.x, m.x);
+      if (!aligned) {
+        // keep entering the end the way it did before
+        if (want === 'h') {
+          if (o[k] === 'h') {
+            const xm = mid(m.x, E.x);
+            insertAfter = [{ x: xm, y: m.y }, { x: xm, y: E.y }];
+          } else insertAfter = [{ x: E.x, y: m.y }];
+        } else if (o[k] === 'v') {
+          const ym = mid(m.y, E.y);
+          insertAfter = [{ x: m.x, y: ym }, { x: E.x, y: ym }];
+        } else insertAfter = [{ x: m.x, y: E.y }];
       }
-    } else if (o[k] === 'h') pts[k + 1].y = m.y;
-    else pts[k + 1].x = m.x;
+    } else if (want === o[k]) {
+      if (want === 'h') pts[k + 1].y = m.y;
+      else pts[k + 1].x = m.x;
+    } else {
+      insertAfter = [want === 'h' ? { x: pts[k + 1].x, y: m.y } : { x: m.x, y: pts[k + 1].y }];
+    }
     const corners = pts.slice(1, -1);
     const ci = idx;
     w.points = [...corners.slice(0, ci), ...insertBefore, corners[ci], ...insertAfter, ...corners.slice(ci + 1)];
