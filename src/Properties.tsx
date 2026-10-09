@@ -2,8 +2,8 @@ import React from 'react';
 import { produce } from 'immer';
 import { useStore } from './store';
 import type { Dash, Doc, Shape, WireStyle } from './types';
-import { autoRoute, defaultPortLabelOffset, findPort, normalizeWire } from './model';
-import { objBBox } from './geometry';
+import { autoRoute, defaultPortLabelOffset, findPort, normalizeWire, reconcileWires } from './model';
+import { eq, objBBox, portDir } from './geometry';
 import { align, deleteSelection, group, organize, rotateOrFlip, ungroup, zOrder } from './actions';
 import { resizeObject, applyMove } from './edit';
 
@@ -53,6 +53,28 @@ function Num({ value, onChange, min, max, step = 1 }: { value: number; onChange:
         if (!isNaN(v)) onChange(v);
       }}
     />
+  );
+}
+
+function Percent({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const v = Math.round(value * 10) / 10;
+  return (
+    <span className="percent-field">
+      <input type="range" min={0} max={100} step={1} value={v} onChange={(e) => onChange(parseFloat(e.target.value))} />
+      <input
+        className="prop-input num"
+        type="number"
+        min={0}
+        max={100}
+        step={0.5}
+        value={v}
+        onChange={(e) => {
+          const n = parseFloat(e.target.value);
+          if (!isNaN(n)) onChange(n);
+        }}
+      />
+      <span className="unit">%</span>
+    </span>
   );
 }
 
@@ -222,6 +244,21 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
           const port = d.objects[selPort.obj]?.ports.find((x) => x.id === selPort.port);
           if (port) Object.assign(port, p);
         });
+      // move the node to a percentage of the object's width / height; attached wires stretch
+      const setPos = (axis: 'x' | 'y', pct: number) => {
+        const before = useStore.getState().doc;
+        editDoc((d) => {
+          const o = d.objects[selPort.obj];
+          const port = o?.ports.find((x) => x.id === selPort.port);
+          if (!port) return;
+          const v = (Math.min(100, Math.max(0, pct)) / 100) * (axis === 'x' ? o.w : o.h);
+          if (axis === 'x') port.x = v;
+          else port.y = v;
+          const oldDir = portDir(before.objects[o.id], before.objects[o.id].ports.find((x) => x.id === port.id)!);
+          if (!eq(oldDir, portDir(o, port))) port.labelOffset = defaultPortLabelOffset(o, port);
+          reconcileWires(before, d, s.grid);
+        });
+      };
       const wires = Object.values(doc.wires).filter(
         (w) => (w.a.kind === 'port' && w.a.obj === r.o.id && w.a.port === r.p.id) || (w.b.kind === 'port' && w.b.obj === r.o.id && w.b.port === r.p.id),
       ).length;
@@ -239,6 +276,12 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
             </Row>
             <Row label="Label">
               <Check label="show" value={r.p.showLabel} onChange={(v) => upd({ showLabel: v })} />
+            </Row>
+            <Row label="X (% width)">
+              <Percent value={(r.p.x / r.o.w) * 100} onChange={(v) => setPos('x', v)} />
+            </Row>
+            <Row label="Y (% height)">
+              <Percent value={(r.p.y / r.o.h) * 100} onChange={(v) => setPos('y', v)} />
             </Row>
             <div className="prop-actions">
               <button className="small-btn" onClick={() => upd({ labelOffset: defaultPortLabelOffset(r.o, r.p) })}>

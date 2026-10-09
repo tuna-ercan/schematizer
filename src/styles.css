@@ -100,6 +100,10 @@ textarea.prop-input { resize: vertical; }
 .grid2 .prop-label { width: 14px; }
 .color-field { display: flex; align-items: center; gap: 8px; }
 .color-field input[type="color"] { width: 40px; height: 26px; border: 1px solid var(--border); border-radius: 6px; padding: 1px; background: #fff; cursor: pointer; }
+.percent-field { display: flex; align-items: center; gap: 6px; width: 100%; }
+.percent-field input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.percent-field .prop-input { width: 52px; flex: none; padding: 3px 4px; }
+.percent-field .unit { color: var(--muted); font-size: 12px; }
 .none-toggle, .check { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); cursor: pointer; }
 .inline { display: flex; gap: 12px; }
 .prop-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
