@@ -177,9 +177,6 @@ function NodeStyleEditor({ style, onChange }: { style: NodeStyle; onChange: (p: 
       <Row label="Inner radius">
         <Num value={style.innerRadius} min={0} max={30} step={0.5} onChange={(v) => onChange({ innerRadius: Math.max(0, v) })} />
       </Row>
-      <Row label="Export">
-        <Check label="show in SVG/PNG" value={style.exportVisible} onChange={(v) => onChange({ exportVisible: v })} />
-      </Row>
     </>
   );
 }
@@ -623,6 +620,9 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
         </Row>
         <Row label="Snap to grid">
           <Check label="" value={s.snap} onChange={(v) => s.set({ snap: v })} />
+        </Row>
+        <Row label="Export">
+          <Check label="include nodes in SVG/PNG" value={s.exportNodes} onChange={(v) => s.set({ exportNodes: v })} />
         </Row>
         <p className="muted">
           {doc.order.length} objects · {Object.keys(doc.wires).length} connections

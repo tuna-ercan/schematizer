@@ -117,12 +117,9 @@ export function objTransform(o: Obj) {
   return `translate(${c.x} ${c.y}) rotate(${o.rot}) scale(${o.flipX ? -1 : 1} 1) translate(${-o.w / 2} ${-o.h / 2})`;
 }
 
-export function ObjectBody({ o, interactive }: { o: Obj; interactive: boolean }) {
-  // lines of the drawing that end on a visible node stop at its outer ring
-  const stops: Stop[] = o.ports.flatMap((p) => {
-    const ns = p.style ?? DEFAULT_NODE_STYLE;
-    return interactive || ns.exportVisible ? [{ x: p.x, y: p.y, r: ns.outerRadius }] : [];
-  });
+export function ObjectBody({ o, interactive, nodes = interactive }: { o: Obj; interactive: boolean; nodes?: boolean }) {
+  // lines of the drawing that end on a node stop at its outer ring (when nodes are drawn)
+  const stops: Stop[] = nodes ? o.ports.map((p) => ({ x: p.x, y: p.y, r: (p.style ?? DEFAULT_NODE_STYLE).outerRadius })) : [];
   return (
     <g transform={objTransform(o)} data-kind={interactive ? 'object' : undefined} data-id={o.id}>
       {interactive && <rect x={-3} y={-3} width={o.w + 6} height={o.h + 6} fill="transparent" />}
@@ -142,7 +139,7 @@ function arrowHead(tip: Vec, from: Vec, size: number, color: string, key: string
   return <polygon key={key} points={`${tip.x},${tip.y} ${p1.x},${p1.y} ${p2.x},${p2.y}`} fill={color} />;
 }
 
-export function WireView({ doc, w, interactive, selected, highlighted }: { doc: Doc; w: Wire; interactive: boolean; selected?: boolean; highlighted?: boolean }) {
+export function WireView({ doc, w, interactive, nodes = interactive, selected, highlighted }: { doc: Doc; w: Wire; interactive: boolean; nodes?: boolean; selected?: boolean; highlighted?: boolean }) {
   const full = wireFull(doc, w);
   const size = 6 + w.width * 2;
   // the drawn line stops at the outer ring of a node (where that node is drawn)
@@ -150,8 +147,7 @@ export function WireView({ doc, w, interactive, selected, highlighted }: { doc: 
   const trim = (ep: Endpoint) => {
     if (ep.kind !== 'port') return 0;
     const r = findPort(doc, ep.obj, ep.port);
-    const ns = r?.p.style ?? DEFAULT_NODE_STYLE;
-    return r && (interactive || ns.exportVisible) ? ns.outerRadius : 0;
+    return r && nodes ? (r.p.style ?? DEFAULT_NODE_STYLE).outerRadius : 0;
   };
   const cut = cutEnds(ends, trim(w.a), trim(w.b));
   ends.splice(0, ends.length, ...cut);
@@ -229,6 +225,8 @@ export function ObjectLabel({ o, interactive }: { o: Obj; interactive: boolean }
 
 export interface SceneProps {
   doc: Doc;
+  /** draw nodes outside the editor (exports) */
+  nodes?: boolean;
   interactive?: boolean;
   sel?: Set<string>;
   highlight?: { wires: Set<string>; keys: Set<string> } | null;
@@ -237,7 +235,8 @@ export interface SceneProps {
 }
 
 /** Everything that is part of the drawing (no editor UI). */
-export function Scene({ doc, interactive = false, sel, highlight, hoverPort }: SceneProps) {
+export function Scene({ doc, interactive = false, nodes, sel, highlight, hoverPort }: SceneProps) {
+  const showNodes = interactive || !!nodes;
   const objs = doc.order.map((id) => doc.objects[id]).filter(Boolean);
   const wires = Object.values(doc.wires);
   const junctions = Object.values(doc.junctions);
@@ -245,12 +244,12 @@ export function Scene({ doc, interactive = false, sel, highlight, hoverPort }: S
     <>
       <g className="layer-objects">
         {objs.map((o) => (
-          <ObjectBody key={o.id} o={o} interactive={interactive} />
+          <ObjectBody key={o.id} o={o} interactive={interactive} nodes={showNodes} />
         ))}
       </g>
       <g className="layer-wires">
         {wires.map((w) => (
-          <WireView key={w.id} doc={doc} w={w} interactive={interactive} selected={sel?.has(w.id)} highlighted={highlight?.wires.has(w.id)} />
+          <WireView key={w.id} doc={doc} w={w} interactive={interactive} nodes={showNodes} selected={sel?.has(w.id)} highlighted={highlight?.wires.has(w.id)} />
         ))}
       </g>
       <g className="layer-junctions">
@@ -273,7 +272,7 @@ export function Scene({ doc, interactive = false, sel, highlight, hoverPort }: S
         {objs.map((o) =>
           o.ports.map((p) => {
             const ns = p.style ?? DEFAULT_NODE_STYLE;
-            if (!interactive && !ns.exportVisible) return null;
+            if (!showNodes) return null;
             const wp = portWorld(o, p);
             const key = `${o.id}:${p.id}`;
             const hot = hoverPort === key;

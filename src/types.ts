@@ -37,8 +37,8 @@ export interface NodeStyle {
   outerRadius: number;
   /** 0 = solid dot */
   innerRadius: number;
-  /** also draw the node in SVG / PNG exports */
-  exportVisible: boolean;
+  /** no longer used (exports follow the global "include nodes" option); kept for older files */
+  exportVisible?: boolean;
 }
 
 export const DEFAULT_NODE_STYLE: NodeStyle = {

@@ -47,23 +47,23 @@ export function docBounds(doc: Doc) {
   return unionRect(rs) ?? { x: 0, y: 0, w: 100, h: 100 };
 }
 
-export function exportSvgString(doc: Doc, background: string | null = '#ffffff', pad = 20): { svg: string; w: number; h: number } {
+export function exportSvgString(doc: Doc, nodes = true, background: string | null = '#ffffff', pad = 20): { svg: string; w: number; h: number } {
   const b = docBounds(doc);
   const x = Math.floor(b.x - pad), y = Math.floor(b.y - pad);
   const w = Math.ceil(b.w + pad * 2), h = Math.ceil(b.h + pad * 2);
-  const inner = renderToStaticMarkup(React.createElement(Scene, { doc, interactive: false }));
+  const inner = renderToStaticMarkup(React.createElement(Scene, { doc, interactive: false, nodes }));
   const bg = background ? `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${background}"/>` : '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="${x} ${y} ${w} ${h}">${bg}${inner}</svg>`;
   return { svg, w, h };
 }
 
-export function exportSvg(doc: Doc, name: string) {
-  const { svg } = exportSvgString(doc);
+export function exportSvg(doc: Doc, name: string, nodes = true) {
+  const { svg } = exportSvgString(doc, nodes);
   downloadBlob(new Blob([svg], { type: 'image/svg+xml' }), `${name || 'untitled'}.svg`);
 }
 
-export async function exportPng(doc: Doc, name: string, scale = 2) {
-  const { svg, w, h } = exportSvgString(doc);
+export async function exportPng(doc: Doc, name: string, nodes = true, scale = 2) {
+  const { svg, w, h } = exportSvgString(doc, nodes);
   const img = new Image();
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
   await new Promise<void>((res, rej) => {

@@ -15,7 +15,7 @@ npm run dev
 
 Then open http://localhost:5173.
 
-Your drawing is autosaved in the browser. **Save** (Ctrl+S) writes a `.schematizer.json` project file: the first time it asks where to save, and later saves overwrite that same file. This also applies to a file you opened. **Save As** (Ctrl+Shift+S) saves to a new file. An orange dot next to the file name means there are unsaved changes. Use **SVG** / **PNG** to export images.
+Your drawing is autosaved in the browser. **Save** (Ctrl+S) writes a `.schematizer.json` project file: the first time it asks where to save, and later saves overwrite that same file. This also applies to a file you opened. **Save As** (Ctrl+Shift+S) saves to a new file. An orange dot next to the file name means there are unsaved changes. Use **SVG** / **PNG** to export images. Nodes are included; to leave them out, clear *Include nodes in SVG/PNG* in the Canvas section of the right-hand panel (shown when nothing is selected).
 
 > Overwriting files needs Chrome or Edge. In other browsers, Save downloads a new copy each time.
 
@@ -35,7 +35,7 @@ Your drawing is autosaved in the browser. **Save** (Ctrl+S) writes a `.schematiz
 | Move a wire segment or corner | Select the wire, then drag the segment or the square handle |
 | Organize wires | Select the connections, then press **Organize**: only those are re-routed, to avoid objects, labels and crossings. To organize everything attached to a part, right-click it → *Organize its wires*; for the whole drawing, right-click empty canvas → *Organize all wires* |
 | Orthogonal lock | Toolbar button or O. When on, wires use only horizontal and vertical segments |
-| Node style | Select a node to set its outer/inner color and radius (inner radius 0 = solid dot), the inner color's opacity, and whether it shows in exports. Apply it to all nodes of the object, or make it the default for new nodes |
+| Node style | Select a node to set its outer/inner color and radius (inner radius 0 = solid dot), and the inner color's opacity. Apply it to all nodes of the object, or make it the default for new nodes |
 | Wire style | Select a wire to set color, thickness, dash style, corner radius and arrows. "Use as default" applies that style to new wires |
 | Copy / paste a style | **Copy style** (Ctrl+Alt+C) on a node, connection or shape, then select others and **Paste style** (Ctrl+Alt+V). A node style pasted onto objects applies to all their nodes; shapes keep their text |
 | Reset a style | **Reset style** on a node, connection or shape returns it to the default look (shapes keep their text). With nothing selected, **Reset to original** restores the built-in defaults for new connections and nodes |

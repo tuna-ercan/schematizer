@@ -29,6 +29,8 @@ export interface State {
   wireStyle: WireStyle;
   /** style for newly created nodes */
   nodeStyle: NodeStyle;
+  /** draw nodes in SVG / PNG exports */
+  exportNodes: boolean;
   highlight: { wires: Set<string>; keys: Set<string> } | null;
   /** style captured by "Copy style" */
   styleClip: StyleClip | null;
@@ -66,7 +68,7 @@ function loadInitial(): Partial<State> {
     const s = localStorage.getItem(LS_SETTINGS);
     if (s) {
       const j = JSON.parse(s);
-      for (const k of ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'nodeStyle', 'fileName', 'dirty'] as const) if (j[k] !== undefined) (out as any)[k] = j[k];
+      for (const k of ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'nodeStyle', 'exportNodes', 'fileName', 'dirty'] as const) if (j[k] !== undefined) (out as any)[k] = j[k];
       // the default node color changed from blue to green; keep custom defaults
       const ns = out.nodeStyle;
       if (ns && ns.outerColor === '#2563eb' && ns.innerColor === '#ffffff' && ns.outerRadius === 4 && ns.innerRadius === 2.5) out.nodeStyle = { ...DEFAULT_NODE_STYLE };
@@ -96,6 +98,7 @@ export const useStore = create<State>((set, get) => ({
   zoom: 1,
   wireStyle: { ...defaultWireStyle },
   nodeStyle: { ...DEFAULT_NODE_STYLE },
+  exportNodes: true,
   highlight: null,
   styleClip: null,
   fileName: 'untitled',
@@ -147,7 +150,7 @@ useStore.subscribe((s, prev) => {
       }
     }, 400);
   }
-  const keys = ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'nodeStyle', 'fileName', 'dirty'] as const;
+  const keys = ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'nodeStyle', 'exportNodes', 'fileName', 'dirty'] as const;
   if (keys.some((k) => s[k] !== prev[k])) {
     try {
       const out: Record<string, unknown> = {};

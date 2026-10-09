@@ -63,10 +63,10 @@ export function Toolbar({ onHelp }: { onHelp: () => void }) {
         <button className="tb-text" onClick={() => saveFile(true)} title="Save as a new file (Ctrl+Shift+S)">
           Save As
         </button>
-        <button className="tb-text" onClick={() => exportSvg(s.doc, s.fileName)}>
+        <button className="tb-text" title={`Export SVG (${s.exportNodes ? 'with' : 'without'} nodes – change under Canvas when nothing is selected)`} onClick={() => exportSvg(s.doc, s.fileName, s.exportNodes)}>
           SVG
         </button>
-        <button className="tb-text" onClick={() => exportPng(s.doc, s.fileName).catch((e) => alert(e.message))}>
+        <button className="tb-text" title={`Export PNG (${s.exportNodes ? 'with' : 'without'} nodes – change under Canvas when nothing is selected)`} onClick={() => exportPng(s.doc, s.fileName, s.exportNodes).catch((e) => alert(e.message))}>
           PNG
         </button>
       </div>
