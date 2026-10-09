@@ -24,10 +24,10 @@ function editDoc(fn: (d: Doc) => void) {
 // ---------------------------------------------------------------- fields
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="prop-row">
+    <div className="prop-row">
       <span className="prop-label">{label}</span>
       <span className="prop-value">{children}</span>
-    </label>
+    </div>
   );
 }
 
@@ -263,7 +263,10 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
   if (objs.length === 1 && wires.length === 0) {
     const o = objs[0];
     const bb = objBBox(o);
-    const upd = (fn: (oo: typeof o) => void) => editDoc((d) => d.objects[o.id] && fn(d.objects[o.id]));
+    const upd = (fn: (oo: typeof o) => void) =>
+      editDoc((d) => {
+        if (d.objects[o.id]) fn(d.objects[o.id]);
+      });
     const setBox = (p: Partial<{ x: number; y: number; w: number; h: number }>) => {
       const st = useStore.getState();
       const base = editBase ?? st.doc;
