@@ -47,7 +47,7 @@ export function newObj(p: Partial<Obj> & { w: number; h: number }): Obj {
     rot: 0,
     flipX: false,
     label: '',
-    showLabel: true,
+    showLabel: false,
     labelOffset: { x: 0, y: p.h / 2 + 16 },
     shapes: [],
     ports: [],
@@ -63,7 +63,7 @@ export function defaultPortLabelOffset(o: Obj, port: Port): Vec {
 }
 
 export function newPort(o: Obj, local: Vec, name: string): Port {
-  const p: Port = { id: uid('p'), name, number: '', net: '', x: local.x, y: local.y, showLabel: true, labelOffset: { x: 0, y: 0 } };
+  const p: Port = { id: uid('p'), name, number: '', net: '', x: local.x, y: local.y, showLabel: false, labelOffset: { x: 0, y: 0 } };
   p.labelOffset = defaultPortLabelOffset(o, p);
   return p;
 }
@@ -388,7 +388,7 @@ export function groupObjects(d: Doc, ids: string[]): string | null {
   if (objs.length < 2) return null;
   const bb = unionRect(objs.map(objBBox))!;
   const origin = { x: bb.x, y: bb.y };
-  const g = newObj({ x: bb.x, y: bb.y, w: bb.w, h: bb.h, showLabel: true, label: '' });
+  const g = newObj({ x: bb.x, y: bb.y, w: bb.w, h: bb.h, label: '' });
   for (const o of objs) {
     for (const s of o.shapes) g.shapes.push(bakeShape(o, s, origin));
     if (o.label && o.showLabel) {

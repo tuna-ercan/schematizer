@@ -20,12 +20,11 @@ function sym(
   shapes: Shape[],
   ports: { name: string; x: number; y: number; net?: string }[],
   opts: Partial<Obj> = {},
-  showPortLabels = false,
 ): LibSymbol {
   const o = newObj({ w, h, label: opts.label ?? '', ...opts });
   o.shapes = shapes;
   o.ports = ports.map((p) => {
-    const port = { id: uid('p'), name: p.name, number: '', net: p.net ?? '', x: p.x, y: p.y, showLabel: showPortLabels, labelOffset: { x: 0, y: 0 } };
+    const port = { id: uid('p'), name: p.name, number: '', net: p.net ?? '', x: p.x, y: p.y, showLabel: false, labelOffset: { x: 0, y: 0 } };
     port.labelOffset = defaultPortLabelOffset(o, port);
     return port;
   });
@@ -97,7 +96,6 @@ export function builtinSymbols(): LibSymbol[] {
       [line([[0, 20], [24, 20]]), line([[24, 4], [24, 36]]), line([[34, 12], [34, 28]], { strokeWidth: 4 }), line([[34, 20], [60, 20]])],
       [{ name: '+', x: 0, y: 20 }, { name: '-', x: 60, y: 20 }],
       { label: 'BAT1', labelOffset: { x: 0, y: -30 } },
-      true,
     ),
     sym(
       'Switch',
@@ -121,7 +119,14 @@ export function builtinSymbols(): LibSymbol[] {
       [{ name: '', x: 15, y: 0, net: 'GND' }],
       { label: '' },
     ),
-    sym('VCC', 30, 30, [line([[15, 30], [15, 12]]), line([[5, 12], [25, 12]])], [{ name: '', x: 15, y: 30, net: 'VCC' }], { label: 'VCC', labelOffset: { x: 0, y: -12 } }),
+    sym(
+      'VCC',
+      30,
+      40,
+      [newShape('text', { x: 0, y: 0, w: 30, h: 14, text: 'VCC', fontSize: 11, stroke: 'none' }), line([[15, 40], [15, 20]]), line([[5, 20], [25, 20]])],
+      [{ name: '', x: 15, y: 40, net: 'VCC' }],
+      { label: '' },
+    ),
     sym(
       'NPN',
       60,
@@ -162,7 +167,6 @@ export function builtinSymbols(): LibSymbol[] {
         ...[0, 1, 2, 3].map((i) => ({ name: `P${8 - i}`, x: 80, y: 20 + i * 20 })),
       ],
       { label: 'U1', labelOffset: { x: 0, y: 66 } },
-      true,
     ),
   ];
 }
