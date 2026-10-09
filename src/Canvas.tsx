@@ -12,7 +12,7 @@ import {
 } from './model';
 import { routeOrtho } from './router';
 import { applyMove, dragCorner, dragSegment, insertCorner, movePort, portLocalAt, resizeObject } from './edit';
-import { pointer, addImageFile, addObject, copyToClip, deleteSelection, duplicate, group, organize, pasteFromText, rerouteWire, rotateOrFlip, selectAll, ungroup, zOrder, zoomToFit } from './actions';
+import { canPasteStyle, copyStyle, pasteStyle, pointer, addImageFile, addObject, copyToClip, deleteSelection, duplicate, group, organize, pasteFromText, rerouteWire, rotateOrFlip, selectAll, ungroup, zOrder, zoomToFit } from './actions';
 import type { MenuItem } from './ContextMenu';
 import { instantiate, type LibSymbol } from './symbols';
 import { RULER, Rulers } from './Rulers';
@@ -765,6 +765,11 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     const s = S();
     const t = getTarget(e.target);
     const items: MenuItem[] = [];
+    // evaluated after the right-clicked item has been selected
+    const styleItems = (): MenuItem[] => [
+      { label: 'Copy style', shortcut: 'Ctrl+Alt+C', action: () => void copyStyle() },
+      ...(canPasteStyle() ? [{ label: 'Paste style', shortcut: 'Ctrl+Alt+V', action: () => void pasteStyle() }] : []),
+    ];
     if (t.kind === 'corner' && t.id != null && t.idx != null) {
       const id = t.id, idx = t.idx;
       const w = s.doc.wires[id];
@@ -778,12 +783,14 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         { label: 'Organize selected wires', action: organize },
         { label: 'Highlight net', shortcut: 'Alt+Click', action: () => s.set({ highlight: netOfWire(S().doc, id) }) },
         { sep: true },
+        ...styleItems(),
+        { sep: true },
         { label: 'Delete', shortcut: 'Del', action: deleteSelection },
       );
     } else if ((t.kind === 'port' || t.kind === 'plabel') && t.obj && t.port) {
       const obj = t.obj, port = t.port;
       s.select([], { obj, port });
-      items.push({ label: 'Rename node', action: () => editPort(obj, port) }, { label: 'Delete node', shortcut: 'Del', action: deleteSelection });
+      items.push({ label: 'Rename node', action: () => editPort(obj, port) }, ...styleItems(), { sep: true }, { label: 'Delete node', shortcut: 'Del', action: deleteSelection });
     } else if ((t.kind === 'object' || t.kind === 'olabel') && t.id) {
       const id = t.id;
       if (!s.sel.includes(id)) s.select([id]);
@@ -793,6 +800,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         { sep: true },
         { label: 'Copy', shortcut: 'Ctrl+C', action: () => copyToClip() },
         { label: 'Duplicate', shortcut: 'Ctrl+D', action: duplicate },
+        ...styleItems(),
         { label: 'Rotate 90°', shortcut: 'R', action: () => rotateOrFlip('rotate') },
         { label: 'Flip horizontal', shortcut: 'F', action: () => rotateOrFlip('flipX') },
         { label: 'Flip vertical', shortcut: 'Shift+F', action: () => rotateOrFlip('flipY') },

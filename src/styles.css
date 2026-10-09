@@ -131,7 +131,8 @@ textarea.prop-input { resize: vertical; }
 .small-btn {
   border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 12px;
 }
-.small-btn:hover { background: #f1f5f9; }
+.small-btn:hover:not(:disabled) { background: #f1f5f9; }
+.small-btn:disabled { opacity: 0.45; cursor: default; }
 .small-btn.danger { color: var(--danger); }
 .icon-btn { border: none; background: transparent; cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
 .icon-btn:hover { background: #f1f5f9; }

@@ -2,7 +2,8 @@ import type { Clip } from './model';
 import { autoRoute, copySelection, deleteItems, groupObjects, newObj, newShape, normalizeWire, organizeWires, pasteClip, ungroupObject } from './model';
 import { applyMove, transformObjects } from './edit';
 import { useStore } from './store';
-import type { Doc, Obj, Vec } from './types';
+import type { Doc, Obj, Shape, ShapeStyle, StyleClip, Vec, WireStyle } from './types';
+import { DEFAULT_NODE_STYLE } from './types';
 import { docBounds, imageSize, readFileAsDataURL } from './io';
 import { objBBox, snapN, unionRect } from './geometry';
 
@@ -13,6 +14,70 @@ export function viewportCenter(): Vec {
   const { pan, zoom } = S();
   const w = el?.clientWidth ?? 800, h = el?.clientHeight ?? 600;
   return { x: (w / 2 - pan.x) / zoom, y: (h / 2 - pan.y) / zoom };
+}
+
+// ---------------------------------------------------------------- copy / paste style
+
+const wireStyleOf = (w: WireStyle): WireStyle => ({ color: w.color, width: w.width, dash: w.dash, radius: w.radius, arrowA: w.arrowA, arrowB: w.arrowB });
+const shapeStyleOf = (s: Shape): ShapeStyle => ({
+  stroke: s.stroke, fill: s.fill, strokeWidth: s.strokeWidth, dash: s.dash, radius: s.radius, fontSize: s.fontSize, textColor: s.textColor,
+});
+
+/** The style "Copy style" would take from the current selection. */
+export function styleOfSelection(): StyleClip | null {
+  const { doc, sel, selPort } = S();
+  if (selPort) {
+    const p = doc.objects[selPort.obj]?.ports.find((x) => x.id === selPort.port);
+    return p ? { kind: 'node', style: { ...(p.style ?? DEFAULT_NODE_STYLE) } } : null;
+  }
+  const w = sel.map((id) => doc.wires[id]).find(Boolean);
+  if (w) return { kind: 'wire', style: wireStyleOf(w) };
+  for (const id of sel) {
+    const sh = doc.objects[id]?.shapes.find((x) => x.kind !== 'image');
+    if (sh) return { kind: 'shape', style: shapeStyleOf(sh) };
+  }
+  return null;
+}
+
+export function copyStyle(): boolean {
+  const clip = styleOfSelection();
+  if (clip) S().set({ styleClip: clip });
+  return !!clip;
+}
+
+/** Whether the copied style has something in the selection to apply to. */
+export function canPasteStyle(): boolean {
+  const { styleClip: c, doc, sel, selPort } = S();
+  if (!c) return false;
+  if (c.kind === 'wire') return sel.some((id) => doc.wires[id]);
+  if (c.kind === 'node') return !!selPort || sel.some((id) => doc.objects[id]?.ports.length);
+  return sel.some((id) => doc.objects[id]?.shapes.some((x) => x.kind !== 'image'));
+}
+
+export function pasteStyle(): boolean {
+  const { styleClip: c, sel, selPort } = S();
+  if (!c || !canPasteStyle()) return false;
+  S().commit((d) => {
+    if (c.kind === 'wire') {
+      for (const id of sel) if (d.wires[id]) Object.assign(d.wires[id], c.style);
+    } else if (c.kind === 'node') {
+      if (selPort) {
+        const p = d.objects[selPort.obj]?.ports.find((x) => x.id === selPort.port);
+        if (p) p.style = { ...c.style };
+      } else for (const id of sel) for (const p of d.objects[id]?.ports ?? []) p.style = { ...c.style };
+    } else {
+      for (const id of sel)
+        for (const sh of d.objects[id]?.shapes ?? []) {
+          if (sh.kind === 'image') continue;
+          sh.fontSize = c.style.fontSize;
+          sh.textColor = c.style.textColor;
+          if (sh.kind === 'text') continue;
+          Object.assign(sh, { stroke: c.style.stroke, strokeWidth: c.style.strokeWidth, dash: c.style.dash, radius: c.style.radius });
+          if (!(sh.kind === 'poly' && !sh.closed)) sh.fill = c.style.fill;
+        }
+    }
+  });
+  return true;
 }
 
 export function deleteSelection() {

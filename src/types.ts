@@ -130,4 +130,10 @@ export interface Rect {
 
 export type Tool = 'select' | 'node' | 'wire' | 'box' | 'line' | 'text';
 
+/** The style fields of a shape that copy/paste style transfers (not text or geometry). */
+export type ShapeStyle = Pick<Shape, 'stroke' | 'fill' | 'strokeWidth' | 'dash' | 'radius' | 'fontSize' | 'textColor'>;
+
+/** What "Copy style" captured. */
+export type StyleClip = { kind: 'wire'; style: WireStyle } | { kind: 'node'; style: NodeStyle } | { kind: 'shape'; style: ShapeStyle };
+
 export const emptyDoc = (): Doc => ({ objects: {}, order: [], wires: {}, junctions: {} });

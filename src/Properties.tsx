@@ -5,7 +5,7 @@ import type { Dash, Doc, NodeStyle, Shape, WireStyle } from './types';
 import { DEFAULT_NODE_STYLE } from './types';
 import { autoRoute, defaultPortLabelOffset, defaultWireStyle, findPort, newShape, normalizeWire, reconcileWires } from './model';
 import { eq, objBBox, portDir } from './geometry';
-import { align, deleteSelection, group, organize, rotateOrFlip, ungroup, zOrder } from './actions';
+import { align, canPasteStyle, copyStyle, deleteSelection, group, organize, pasteStyle, rotateOrFlip, ungroup, zOrder } from './actions';
 import { resizeObject, applyMove } from './edit';
 import { NodeDot } from './Scene';
 
@@ -288,6 +288,24 @@ function resetShape(objId: string, shape: Shape) {
 
 const shapeName: Record<Shape['kind'], string> = { rect: 'Box', ellipse: 'Ellipse', image: 'Image', text: 'Text', poly: 'Line' };
 
+/** Copy style / Paste style buttons (format painter). */
+function StyleClipButtons() {
+  useStore((s) => s.styleClip); // re-render when a style is copied
+  const can = canPasteStyle();
+  const clip = useStore.getState().styleClip;
+  const what = clip ? { wire: 'connection', node: 'node', shape: 'shape' }[clip.kind] : '';
+  return (
+    <>
+      <button className="small-btn" title="Copy this style (Ctrl+Alt+C)" onClick={() => copyStyle()}>
+        Copy style
+      </button>
+      <button className="small-btn" title={clip ? `Paste the copied ${what} style (Ctrl+Alt+V)` : 'Copy a style first'} disabled={!can} onClick={() => pasteStyle()}>
+        Paste style
+      </button>
+    </>
+  );
+}
+
 // ---------------------------------------------------------------- panel
 export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) => void }) {
   const s = useStore();
@@ -393,6 +411,7 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
               >
                 Reset all nodes of object
               </button>
+              <StyleClipButtons />
             </div>
           </Section>
         </aside>
@@ -478,6 +497,7 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
             <button className="small-btn" onClick={organize}>
               Organize wires
             </button>
+            <StyleClipButtons />
           </div>
         </Section>
         <Section title={`Nodes (${o.ports.length})`}>
@@ -554,6 +574,7 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
             >
               Reset style
             </button>
+            <StyleClipButtons />
             <button className="small-btn" onClick={organize}>
               Organize
             </button>
@@ -624,6 +645,7 @@ function MultiObject({ count }: { count: number }) {
         <button className="small-btn" onClick={() => rotateOrFlip('rotate')}>
           Rotate
         </button>
+        <StyleClipButtons />
         <button className="small-btn danger" onClick={deleteSelection}>
           Delete
         </button>

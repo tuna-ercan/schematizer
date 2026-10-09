@@ -37,6 +37,7 @@ Your drawing is autosaved in the browser. **Save** (Ctrl+S) writes a `.schematiz
 | Orthogonal lock | Toolbar button or O. When on, wires use only horizontal and vertical segments |
 | Node style | Select a node to set its outer/inner color and radius (inner radius 0 = solid dot), the inner color's opacity, and whether it shows in exports. Apply it to all nodes of the object, or make it the default for new nodes |
 | Wire style | Select a wire to set color, thickness, dash style, corner radius and arrows. "Use as default" applies that style to new wires |
+| Copy / paste a style | **Copy style** (Ctrl+Alt+C) on a node, connection or shape, then select others and **Paste style** (Ctrl+Alt+V). A node style pasted onto objects applies to all their nodes; shapes keep their text |
 | Reset a style | **Reset style** on a node, connection or shape returns it to the default look (shapes keep their text). With nothing selected, **Reset to original** restores the built-in defaults for new connections and nodes |
 | Copy / paste with connections | Ctrl+C / Ctrl+V pastes at the mouse. Wires between copied objects are copied too |
 | Build your own part | Box (B), Line (L) and Text (T) tools, then select the pieces → Ctrl+G to group, add nodes, right-click → *Add to library* |

@@ -5,7 +5,7 @@ import { Properties } from './Properties';
 import { Library } from './Library';
 import { ContextMenu, type MenuItem } from './ContextMenu';
 import { useStore } from './store';
-import { addImageFile, align, copyToClip, lastClipText, deleteSelection, duplicate, group, pasteFromText, rotateOrFlip, selectAll, ungroup, zOrder, zoomBy, zoomToFit } from './actions';
+import { addImageFile, align, copyStyle, pasteStyle, copyToClip, lastClipText, deleteSelection, duplicate, group, pasteFromText, rotateOrFlip, selectAll, ungroup, zOrder, zoomBy, zoomToFit } from './actions';
 import { openFile, restoreFileHandle, saveFile } from './files';
 import { loadUserSymbols, saveUserSymbols, type LibSymbol } from './symbols';
 import { groupObjects, uid } from './model';
@@ -76,6 +76,8 @@ export function App() {
         else if (k === '[') zOrder('back');
         else if (k === 'r') s.set({ showRulers: !s.showRulers });
         else if (k === ';') s.set({ showGuides: !s.showGuides });
+        else if (e.altKey && k === 'c') copyStyle();
+        else if (e.altKey && k === 'v') pasteStyle();
         else if (k === 'c' || k === 'x') {
           // copy right away; the 'copy' event (if it fires) also puts it on the system clipboard
           if (window.getSelection()?.toString()) return;
@@ -213,6 +215,7 @@ const shortcuts: [string, string][] = [
   ['R / F / Shift+F', 'Rotate / flip horizontal / flip vertical'],
   ['Ctrl+C / Ctrl+V / Ctrl+X / Ctrl+D', 'Copy / paste / cut / duplicate'],
   ['Ctrl+G / Ctrl+Shift+G', 'Group / ungroup'],
+  ['Ctrl+Alt+C / Ctrl+Alt+V', 'Copy style / paste style (nodes, connections, shapes)'],
   ['Shift+V / Shift+H', 'Align vertical centers (row) / horizontal centers (column)'],
   ['Ctrl+R / Ctrl+;', 'Show/hide rulers / guides'],
   ['Drag from a ruler', 'Create a guide (drag it back onto the ruler to delete)'],

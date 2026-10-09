@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { produce, setAutoFreeze } from 'immer';
-import type { Doc, NodeStyle, Tool, Vec, WireStyle } from './types';
+import type { Doc, NodeStyle, StyleClip, Tool, Vec, WireStyle } from './types';
 import { DEFAULT_NODE_STYLE, emptyDoc } from './types';
 import { defaultWireStyle } from './model';
 
@@ -30,6 +30,8 @@ export interface State {
   /** style for newly created nodes */
   nodeStyle: NodeStyle;
   highlight: { wires: Set<string>; keys: Set<string> } | null;
+  /** style captured by "Copy style" */
+  styleClip: StyleClip | null;
   fileName: string;
   /** unsaved changes since the last save / open */
   dirty: boolean;
@@ -95,6 +97,7 @@ export const useStore = create<State>((set, get) => ({
   wireStyle: { ...defaultWireStyle },
   nodeStyle: { ...DEFAULT_NODE_STYLE },
   highlight: null,
+  styleClip: null,
   fileName: 'untitled',
   dirty: false,
   linkedFile: null,
