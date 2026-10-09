@@ -1,0 +1,233 @@
+import React from 'react';
+import type { Dash, Doc, Obj, Port, Shape, Vec, Wire } from './types';
+import { add, dist, mul, norm, objCenter, portWorld, roundedPath, sub } from './geometry';
+import { junctionDegree, wireFull } from './model';
+
+export function dashArray(dash: Dash, width: number): string | undefined {
+  const w = Math.max(width, 1);
+  switch (dash) {
+    case 'dashed':
+      return `${w * 4} ${w * 3}`;
+    case 'dotted':
+      return `0.01 ${w * 2.5}`;
+    case 'dashdot':
+      return `${w * 5} ${w * 2.5} 0.01 ${w * 2.5}`;
+    default:
+      return undefined;
+  }
+}
+
+function TextLines({ text, x, y, fontSize, color, anchor = 'middle' }: { text: string; x: number; y: number; fontSize: number; color: string; anchor?: string }) {
+  const lines = text.split('\n');
+  const lh = fontSize * 1.2;
+  const y0 = y - ((lines.length - 1) * lh) / 2;
+  return (
+    <text x={x} y={y0} fontSize={fontSize} fill={color} textAnchor={anchor} dominantBaseline="central" fontFamily="Inter, system-ui, sans-serif" style={{ userSelect: 'none' }}>
+      {lines.map((l, i) => (
+        <tspan key={i} x={x} dy={i === 0 ? 0 : lh}>
+          {l || ' '}
+        </tspan>
+      ))}
+    </text>
+  );
+}
+
+export function ShapeView({ s }: { s: Shape }) {
+  const common = {
+    stroke: s.stroke,
+    strokeWidth: s.strokeWidth,
+    strokeDasharray: dashArray(s.dash, s.strokeWidth),
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  };
+  if (s.kind === 'poly') {
+    const pts = (s.points ?? []).map((p) => `${p.x},${p.y}`).join(' ');
+    return s.closed ? <polygon points={pts} fill={s.fill} {...common} /> : <polyline points={pts} fill={s.fill === 'none' ? 'none' : s.fill} {...common} />;
+  }
+  const cx = s.x + s.w / 2, cy = s.y + s.h / 2;
+  const tf = s.rot || s.flipX ? `translate(${cx} ${cy}) rotate(${s.rot}) scale(${s.flipX ? -1 : 1} 1) translate(${-cx} ${-cy})` : undefined;
+  let body: React.ReactNode = null;
+  if (s.kind === 'rect') body = <rect x={s.x} y={s.y} width={s.w} height={s.h} rx={s.radius} fill={s.fill} {...common} />;
+  else if (s.kind === 'ellipse') body = <ellipse cx={cx} cy={cy} rx={s.w / 2} ry={s.h / 2} fill={s.fill} {...common} />;
+  else if (s.kind === 'image') body = <image href={s.src} x={s.x} y={s.y} width={s.w} height={s.h} preserveAspectRatio="xMidYMid meet" />;
+  return (
+    <g transform={tf}>
+      {body}
+      {s.text && <TextLines text={s.text} x={cx} y={cy} fontSize={s.fontSize} color={s.textColor} />}
+    </g>
+  );
+}
+
+export function objTransform(o: Obj) {
+  const c = objCenter(o);
+  return `translate(${c.x} ${c.y}) rotate(${o.rot}) scale(${o.flipX ? -1 : 1} 1) translate(${-o.w / 2} ${-o.h / 2})`;
+}
+
+export function ObjectBody({ o, interactive }: { o: Obj; interactive: boolean }) {
+  return (
+    <g transform={objTransform(o)} data-kind={interactive ? 'object' : undefined} data-id={o.id}>
+      {interactive && <rect x={-3} y={-3} width={o.w + 6} height={o.h + 6} fill="transparent" />}
+      {o.shapes.map((s) => (
+        <ShapeView key={s.id} s={s} />
+      ))}
+    </g>
+  );
+}
+
+function arrowHead(tip: Vec, from: Vec, size: number, color: string, key: string) {
+  const d = norm(sub(tip, from));
+  const base = sub(tip, mul(d, size));
+  const n = { x: -d.y, y: d.x };
+  const p1 = add(base, mul(n, size * 0.45));
+  const p2 = sub(base, mul(n, size * 0.45));
+  return <polygon key={key} points={`${tip.x},${tip.y} ${p1.x},${p1.y} ${p2.x},${p2.y}`} fill={color} />;
+}
+
+export function WireView({ doc, w, interactive, selected, highlighted }: { doc: Doc; w: Wire; interactive: boolean; selected?: boolean; highlighted?: boolean }) {
+  const full = wireFull(doc, w);
+  const size = 6 + w.width * 2;
+  const pts = full.map((p) => ({ ...p }));
+  // shorten the line under arrowheads so the stroke does not poke through the tip
+  if (w.arrowB && pts.length >= 2) {
+    const n = pts.length;
+    const l = dist(pts[n - 2], pts[n - 1]);
+    if (l > size) pts[n - 1] = add(pts[n - 1], mul(norm(sub(pts[n - 2], pts[n - 1])), size * 0.7));
+  }
+  if (w.arrowA && pts.length >= 2) {
+    const l = dist(pts[0], pts[1]);
+    if (l > size) pts[0] = add(pts[0], mul(norm(sub(pts[1], pts[0])), size * 0.7));
+  }
+  const d = roundedPath(pts, w.radius);
+  return (
+    <g data-kind={interactive ? 'wire' : undefined} data-id={w.id}>
+      {(selected || highlighted) && (
+        <path d={roundedPath(full, w.radius)} fill="none" stroke={highlighted ? '#f59e0b' : '#3b82f6'} strokeOpacity={0.35} strokeWidth={w.width + 8} strokeLinecap="round" strokeLinejoin="round" />
+      )}
+      <path d={d} fill="none" stroke={w.color} strokeWidth={w.width} strokeDasharray={dashArray(w.dash, w.width)} strokeLinecap="round" strokeLinejoin="round" />
+      {w.arrowB && full.length >= 2 && arrowHead(full[full.length - 1], full[full.length - 2], size, w.color, 'ab')}
+      {w.arrowA && full.length >= 2 && arrowHead(full[0], full[1], size, w.color, 'aa')}
+      {interactive &&
+        full.slice(0, -1).map((p, i) => (
+          <line key={i} data-seg={i} x1={p.x} y1={p.y} x2={full[i + 1].x} y2={full[i + 1].y} stroke="transparent" strokeWidth={Math.max(10, w.width + 8)} strokeLinecap="round" />
+        ))}
+    </g>
+  );
+}
+
+function portLabelText(p: Port) {
+  return p.number ? `${p.name} (${p.number})` : p.name;
+}
+
+export function PortLabel({ o, p, interactive }: { o: Obj; p: Port; interactive: boolean }) {
+  const wp = portWorld(o, p);
+  const x = wp.x + p.labelOffset.x, y = wp.y + p.labelOffset.y;
+  const anchor = p.labelOffset.x < -2 ? 'end' : p.labelOffset.x > 2 ? 'start' : 'middle';
+  const text = portLabelText(p);
+  if (!text && !p.net) return null;
+  return (
+    <text
+      x={x}
+      y={y}
+      fontSize={10}
+      fill="#475569"
+      textAnchor={anchor}
+      dominantBaseline="central"
+      fontFamily="Inter, system-ui, sans-serif"
+      data-kind={interactive ? 'plabel' : undefined}
+      data-obj={o.id}
+      data-port={p.id}
+      style={{ userSelect: 'none', cursor: interactive ? 'move' : undefined }}
+    >
+      {text}
+      {p.net && (
+        <tspan fill="#7c3aed" fontWeight={600}>
+          {text ? ' ' : ''}[{p.net}]
+        </tspan>
+      )}
+    </text>
+  );
+}
+
+export function ObjectLabel({ o, interactive }: { o: Obj; interactive: boolean }) {
+  if (!o.showLabel || !o.label) return null;
+  const c = objCenter(o);
+  return (
+    <g data-kind={interactive ? 'olabel' : undefined} data-id={o.id} style={{ cursor: interactive ? 'move' : undefined }}>
+      <TextLines text={o.label} x={c.x + o.labelOffset.x} y={c.y + o.labelOffset.y} fontSize={13} color="#0f172a" />
+    </g>
+  );
+}
+
+export interface SceneProps {
+  doc: Doc;
+  interactive?: boolean;
+  sel?: Set<string>;
+  highlight?: { wires: Set<string>; keys: Set<string> } | null;
+  hoverPort?: string | null;
+  connected?: Set<string>;
+}
+
+/** Everything that is part of the drawing (no editor UI). */
+export function Scene({ doc, interactive = false, sel, highlight, hoverPort }: SceneProps) {
+  const objs = doc.order.map((id) => doc.objects[id]).filter(Boolean);
+  const wires = Object.values(doc.wires);
+  const junctions = Object.values(doc.junctions);
+  return (
+    <>
+      <g className="layer-objects">
+        {objs.map((o) => (
+          <ObjectBody key={o.id} o={o} interactive={interactive} />
+        ))}
+      </g>
+      <g className="layer-wires">
+        {wires.map((w) => (
+          <WireView key={w.id} doc={doc} w={w} interactive={interactive} selected={sel?.has(w.id)} highlighted={highlight?.wires.has(w.id)} />
+        ))}
+      </g>
+      <g className="layer-junctions">
+        {junctions.map((j) => {
+          const deg = junctionDegree(doc, j.id);
+          const w = wires.find((x) => (x.a.kind === 'junction' && x.a.id === j.id) || (x.b.kind === 'junction' && x.b.id === j.id));
+          const color = w?.color ?? '#1f2937';
+          const r = Math.max(3, (w?.width ?? 2) * 1.6);
+          return (
+            <g key={j.id} data-kind={interactive ? 'junction' : undefined} data-id={j.id}>
+              {deg >= 3 && <circle cx={j.x} cy={j.y} r={r} fill={color} />}
+              {interactive && deg < 3 && <circle cx={j.x} cy={j.y} r={3} fill="#fff" stroke={color} strokeWidth={1.5} />}
+              {interactive && <circle cx={j.x} cy={j.y} r={7} fill="transparent" />}
+              {interactive && sel?.has(j.id) && <circle cx={j.x} cy={j.y} r={6} fill="none" stroke="#3b82f6" strokeWidth={1.5} />}
+            </g>
+          );
+        })}
+      </g>
+      {interactive && (
+        <g className="layer-ports">
+          {objs.map((o) =>
+            o.ports.map((p) => {
+              const wp = portWorld(o, p);
+              const key = `${o.id}:${p.id}`;
+              const hot = hoverPort === key;
+              const hl = highlight?.keys.has(`p:${o.id}:${p.id}`);
+              return (
+                <g key={key} data-kind="port" data-obj={o.id} data-port={p.id} className="port">
+                  <circle cx={wp.x} cy={wp.y} r={8} fill="transparent" />
+                  <circle cx={wp.x} cy={wp.y} r={hot ? 5 : 3.5} fill={hl ? '#f59e0b' : hot ? '#2563eb' : '#fff'} stroke="#2563eb" strokeWidth={1.5} className="port-dot" />
+                </g>
+              );
+            }),
+          )}
+        </g>
+      )}
+      <g className="layer-labels">
+        {objs.map((o) => (
+          <React.Fragment key={o.id}>
+            <ObjectLabel o={o} interactive={interactive} />
+            {o.ports.filter((p) => p.showLabel).map((p) => (
+              <PortLabel key={p.id} o={o} p={p} interactive={interactive} />
+            ))}
+          </React.Fragment>
+        ))}
+      </g>
+    </>
+  );
+}
