@@ -3,7 +3,7 @@ import { produce } from 'immer';
 import { useStore } from './store';
 import type { Dash, Doc, NodeStyle, Shape, WireStyle } from './types';
 import { DEFAULT_NODE_STYLE } from './types';
-import { autoRoute, defaultPortLabelOffset, findPort, normalizeWire, reconcileWires } from './model';
+import { autoRoute, defaultPortLabelOffset, defaultWireStyle, findPort, newShape, normalizeWire, reconcileWires } from './model';
 import { eq, objBBox, portDir } from './geometry';
 import { align, deleteSelection, group, organize, rotateOrFlip, ungroup, zOrder } from './actions';
 import { resizeObject, applyMove } from './edit';
@@ -260,8 +260,30 @@ function ShapeEditor({ objId, shape }: { objId: string; shape: Shape }) {
           </Row>
         </>
       )}
+      <div className="prop-actions">
+        <button className="small-btn" title="Back to the standard look (keeps the text)" onClick={() => resetShape(objId, shape)}>
+          Reset style
+        </button>
+      </div>
     </>
   );
+}
+
+/** Restore a shape's standard styling; its text and geometry are kept. */
+function resetShape(objId: string, shape: Shape) {
+  const def = newShape(shape.kind);
+  useStore.getState().commit((d) => {
+    const sh = d.objects[objId]?.shapes.find((x) => x.id === shape.id);
+    if (!sh) return;
+    sh.fontSize = def.fontSize;
+    sh.textColor = def.textColor;
+    if (sh.kind === 'text') return;
+    sh.stroke = def.stroke;
+    if (!(sh.kind === 'poly' && sh.closed)) sh.fill = def.fill; // closed outlines keep their fill (e.g. a diode's triangle)
+    sh.strokeWidth = def.strokeWidth;
+    sh.dash = def.dash;
+    sh.radius = def.radius;
+  });
 }
 
 const shapeName: Record<Shape['kind'], string> = { rect: 'Box', ellipse: 'Ellipse', image: 'Image', text: 'Text', poly: 'Line' };
@@ -347,6 +369,29 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
               </button>
               <button className="small-btn" title="New nodes will use this style" onClick={() => s.set({ nodeStyle: { ...nodeStyle } })}>
                 Use as default
+              </button>
+              <button
+                className="small-btn"
+                title="Back to the default node style"
+                onClick={() =>
+                  s.commit((d) => {
+                    const port = d.objects[selPort.obj]?.ports.find((x) => x.id === selPort.port);
+                    if (port) port.style = { ...s.nodeStyle };
+                  })
+                }
+              >
+                Reset style
+              </button>
+              <button
+                className="small-btn"
+                title="Every node on this object back to the default node style"
+                onClick={() =>
+                  s.commit((d) => {
+                    for (const port of d.objects[selPort.obj]?.ports ?? []) port.style = { ...s.nodeStyle };
+                  })
+                }
+              >
+                Reset all nodes of object
               </button>
             </div>
           </Section>
@@ -498,6 +543,17 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
             <button className="small-btn" onClick={() => s.set({ wireStyle: { color: w0.color, width: w0.width, dash: w0.dash, radius: w0.radius, arrowA: w0.arrowA, arrowB: w0.arrowB } })}>
               Use as default
             </button>
+            <button
+              className="small-btn"
+              title="Back to the default connection style"
+              onClick={() =>
+                s.commit((d) => {
+                  for (const w of wires) if (d.wires[w.id]) Object.assign(d.wires[w.id], s.wireStyle);
+                })
+              }
+            >
+              Reset style
+            </button>
             <button className="small-btn" onClick={organize}>
               Organize
             </button>
@@ -523,9 +579,19 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
     <aside className="props">
       <Section title="New connections">
         <WireStyleEditor style={s.wireStyle} onChange={(p) => s.set({ wireStyle: { ...s.wireStyle, ...p } })} />
+        <div className="prop-actions">
+          <button className="small-btn" title="Restore the built-in connection style" onClick={() => s.set({ wireStyle: { ...defaultWireStyle } })}>
+            Reset to original
+          </button>
+        </div>
       </Section>
       <Section title="New nodes">
         <NodeStyleEditor style={s.nodeStyle} onChange={(p) => s.set({ nodeStyle: { ...s.nodeStyle, ...p } })} />
+        <div className="prop-actions">
+          <button className="small-btn" title="Restore the built-in node style" onClick={() => s.set({ nodeStyle: { ...DEFAULT_NODE_STYLE } })}>
+            Reset to original
+          </button>
+        </div>
       </Section>
       <Section title="Canvas">
         <Row label="Grid size">
