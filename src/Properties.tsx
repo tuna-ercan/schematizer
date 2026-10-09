@@ -5,7 +5,7 @@ import type { Dash, Doc, NodeStyle, Shape, WireStyle } from './types';
 import { DEFAULT_NODE_STYLE } from './types';
 import { autoRoute, defaultPortLabelOffset, defaultWireStyle, findPort, newShape, normalizeWire, reconcileWires } from './model';
 import { eq, objBBox, portDir } from './geometry';
-import { align, canPasteStyle, copyStyle, deleteSelection, group, organize, pasteStyle, rotateOrFlip, ungroup, zOrder } from './actions';
+import { align, canPasteStyle, copyStyle, deleteSelection, group, organize, organizeAttached, pasteStyle, rotateOrFlip, ungroup, zOrder } from './actions';
 import { resizeObject, applyMove } from './edit';
 import { NodeDot } from './Scene';
 
@@ -494,8 +494,8 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
             <button className="small-btn" onClick={() => onAddToLibrary(o.id)}>
               Add to library
             </button>
-            <button className="small-btn" onClick={organize}>
-              Organize wires
+            <button className="small-btn" title="Organize the connections attached to this object" onClick={organizeAttached}>
+              Organize its wires
             </button>
             <StyleClipButtons />
           </div>
@@ -639,8 +639,8 @@ function MultiObject({ count }: { count: number }) {
         <button className="small-btn" onClick={group}>
           Group
         </button>
-        <button className="small-btn" onClick={organize}>
-          Organize wires
+        <button className="small-btn" title="Organize the connections attached to these objects" onClick={organizeAttached}>
+          Organize their wires
         </button>
         <button className="small-btn" onClick={() => rotateOrFlip('rotate')}>
           Rotate

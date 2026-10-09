@@ -12,7 +12,7 @@ import {
 } from './model';
 import { routeOrtho } from './router';
 import { applyMove, dragCorner, dragSegment, insertCorner, movePort, portLocalAt, resizeObject } from './edit';
-import { canPasteStyle, copyStyle, pasteStyle, pointer, addImageFile, addObject, copyToClip, deleteSelection, duplicate, group, organize, pasteFromText, rerouteWire, rotateOrFlip, selectAll, ungroup, zOrder, zoomToFit } from './actions';
+import { canPasteStyle, copyStyle, pasteStyle, pointer, addImageFile, addObject, copyToClip, deleteSelection, duplicate, group, organize, organizeAll, organizeAttached, pasteFromText, rerouteWire, rotateOrFlip, selectAll, ungroup, zOrder, zoomToFit } from './actions';
 import type { MenuItem } from './ContextMenu';
 import { instantiate, type LibSymbol } from './symbols';
 import { RULER, Rulers } from './Rulers';
@@ -825,7 +825,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         { label: 'Send to back', shortcut: 'Ctrl+[', action: () => zOrder('back') },
         ...(objCount > 1 ? [{ label: 'Group', shortcut: 'Ctrl+G', action: group }] : []),
         ...(s.doc.objects[id].shapes.length > 1 ? [{ label: 'Ungroup', shortcut: 'Ctrl+Shift+G', action: ungroup }] : []),
-        { label: 'Organize its wires', action: organize },
+        { label: 'Organize its wires', action: organizeAttached },
         { label: 'Add to library', action: () => onAddToLibrary(id) },
         { sep: true },
         { label: 'Delete', shortcut: 'Del', action: deleteSelection },
@@ -839,7 +839,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         { label: 'Paste', shortcut: 'Ctrl+V', action: () => pasteFromText(null) },
         { label: 'Select all', shortcut: 'Ctrl+A', action: selectAll },
         { label: 'Zoom to fit', shortcut: 'Shift+1', action: zoomToFit },
-        { label: 'Organize all wires', action: () => { s.select([]); organize(); } },
+        { label: 'Organize all wires', action: organizeAll },
         { sep: true },
         { label: s.showRulers ? 'Hide rulers' : 'Show rulers', shortcut: 'Ctrl+R', action: () => s.set({ showRulers: !s.showRulers }) },
         { label: s.showGuides ? 'Hide guides' : 'Show guides', shortcut: 'Ctrl+;', action: () => s.set({ showGuides: !s.showGuides }) },

@@ -40,7 +40,8 @@ button { font: inherit; color: inherit; }
   display: inline-flex; align-items: center; gap: 4px; height: 30px; min-width: 30px; justify-content: center;
   border: 1px solid transparent; border-radius: 6px; background: transparent; cursor: pointer; padding: 0 6px;
 }
-.tb-btn:hover:not(:disabled), .tb-text:hover { background: #f1f5f9; }
+.tb-btn:hover:not(:disabled), .tb-text:hover:not(:disabled) { background: #f1f5f9; }
+.tb-text:disabled { opacity: 0.4; cursor: default; }
 .tb-btn.active { background: var(--accent-soft); color: var(--accent); border-color: #b7e4c7; }
 .tb-btn:disabled { opacity: 0.35; cursor: default; }
 .tb-text.accent { color: var(--accent); font-weight: 600; }

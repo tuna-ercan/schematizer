@@ -29,6 +29,7 @@ export function Toolbar({ onHelp }: { onHelp: () => void }) {
   const openRef = useRef<HTMLInputElement>(null);
   const hasObjSel = s.sel.some((id) => s.doc.objects[id]);
   const multiObj = s.sel.filter((id) => s.doc.objects[id]).length > 1;
+  const hasWireSel = s.sel.some((id) => s.doc.wires[id]);
   const canUngroup = s.sel.some((id) => (s.doc.objects[id]?.shapes.length ?? 0) > 1);
 
   return (
@@ -100,7 +101,12 @@ export function Toolbar({ onHelp }: { onHelp: () => void }) {
         <Btn title={`Rulers: ${s.showRulers ? 'shown' : 'hidden'} (Ctrl+R)`} active={s.showRulers} onClick={() => s.set({ showRulers: !s.showRulers })}>
           {Icons.ruler}
         </Btn>
-        <button className="tb-text accent" title="Organize selected connections (or all, if nothing is selected)" onClick={organize}>
+        <button
+          className="tb-text accent"
+          title={hasWireSel ? 'Organize the selected connections' : 'Select the connections to organize first'}
+          onClick={organize}
+          disabled={!hasWireSel}
+        >
           {Icons.organize}
           <span>Organize</span>
         </button>

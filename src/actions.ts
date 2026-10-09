@@ -211,19 +211,32 @@ export function ungroup() {
   S().select(out);
 }
 
+function organizeIds(ids: string[]) {
+  if (ids.length) S().commit((d) => organizeWires(d, ids, S().grid));
+}
+
+/** Organize only the selected connections. */
 export function organize() {
-  const { sel, doc, grid } = S();
-  let ids = sel.filter((id) => doc.wires[id]);
-  // selected objects: organize the wires between them
+  const { sel, doc } = S();
+  organizeIds(sel.filter((id) => doc.wires[id]));
+}
+
+export const hasSelectedWires = () => S().sel.some((id) => S().doc.wires[id]);
+
+/** Organize every connection attached to the selected objects. */
+export function organizeAttached() {
+  const { sel, doc } = S();
   const objs = new Set(sel.filter((id) => doc.objects[id]));
-  if (!ids.length && objs.size) {
-    ids = Object.values(doc.wires)
+  organizeIds(
+    Object.values(doc.wires)
       .filter((w) => (w.a.kind === 'port' && objs.has(w.a.obj)) || (w.b.kind === 'port' && objs.has(w.b.obj)))
-      .map((w) => w.id);
-  }
-  if (!ids.length) ids = Object.keys(doc.wires);
-  if (!ids.length) return;
-  S().commit((d) => organizeWires(d, ids, grid));
+      .map((w) => w.id),
+  );
+}
+
+/** Organize every connection in the drawing. */
+export function organizeAll() {
+  organizeIds(Object.keys(S().doc.wires));
 }
 
 export function rerouteWire(id: string) {

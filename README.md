@@ -33,7 +33,7 @@ Your drawing is autosaved in the browser. **Save** (Ctrl+S) writes a `.schematiz
 | Free wire end | Double-click on empty canvas while drawing a wire |
 | Add a corner to a wire | Double-click the wire, then drag the corner |
 | Move a wire segment or corner | Select the wire, then drag the segment or the square handle |
-| Organize wires | **Organize** button. Re-routes the selected wires (or all wires, if nothing is selected) to avoid objects, labels and crossings |
+| Organize wires | Select the connections, then press **Organize**: only those are re-routed, to avoid objects, labels and crossings. To organize everything attached to a part, right-click it → *Organize its wires*; for the whole drawing, right-click empty canvas → *Organize all wires* |
 | Orthogonal lock | Toolbar button or O. When on, wires use only horizontal and vertical segments |
 | Node style | Select a node to set its outer/inner color and radius (inner radius 0 = solid dot), the inner color's opacity, and whether it shows in exports. Apply it to all nodes of the object, or make it the default for new nodes |
 | Wire style | Select a wire to set color, thickness, dash style, corner radius and arrows. "Use as default" applies that style to new wires |
