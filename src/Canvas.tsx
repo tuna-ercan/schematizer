@@ -930,7 +930,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         overlays.unshift(
           <g key={`g-${axis}-${i}`} data-kind="guide" data-handle={axis} data-idx={i} style={{ cursor: axis === 'v' ? 'ew-resize' : 'ns-resize' }}>
             <line {...line} stroke="transparent" strokeWidth={7 * hz} />
-            <line {...line} stroke="#06b6d4" strokeWidth={hz} pointerEvents="none" />
+            <line {...line} stroke="#3aa76d" strokeWidth={hz} pointerEvents="none" />
           </g>,
         );
       }),

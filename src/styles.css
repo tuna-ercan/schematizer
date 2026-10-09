@@ -70,12 +70,12 @@ button { font: inherit; color: inherit; }
 .ruler-ticks line { stroke: #94a3b8; stroke-width: 1; shape-rendering: crispEdges; }
 .ruler-ticks text { fill: #64748b; font: 9px Inter, system-ui, sans-serif; user-select: none; }
 .ruler-sel { fill: rgba(58, 167, 109, 0.18); }
-.ruler-cursor { stroke: #ef4444; stroke-width: 1; shape-rendering: crispEdges; }
+.ruler-cursor { stroke: #2f9e66; stroke-width: 1; shape-rendering: crispEdges; }
 .ruler-corner {
   position: absolute; top: 0; left: 0; width: 20px; height: 20px; background: #f8fafc; pointer-events: auto;
   border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
 }
-.guide-preview { position: absolute; pointer-events: none; background: #06b6d4; }
+.guide-preview { position: absolute; pointer-events: none; background: #3aa76d; }
 .guide-preview.v { top: 0; bottom: 0; width: 1px; }
 .guide-preview.h { left: 0; right: 0; height: 1px; }
 .inline-editor {
