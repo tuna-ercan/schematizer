@@ -46,6 +46,11 @@ export function Toolbar({ onHelp }: { onHelp: () => void }) {
         <input className="file-name" value={s.fileName} onChange={(e) => s.set({ fileName: e.target.value })} spellCheck={false} />
         {s.dirty && <span className="dirty-dot" title="Unsaved changes" />}
       </span>
+      {s.autosaveError && (
+        <span className="autosave-error" title={`The browser could not keep a backup copy (${s.autosaveError}). Reloading the page may lose recent changes – use Save.`}>
+          Autosave failed – use Save
+        </span>
+      )}
       <div className="tb-group">
         <button className="tb-text" onClick={newFile}>
           New

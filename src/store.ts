@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { produce, setAutoFreeze } from 'immer';
 import type { Doc, NodeStyle, StyleClip, Tool, Vec, WireStyle } from './types';
 import { DEFAULT_NODE_STYLE, emptyDoc } from './types';
+import { idbGet, idbSet } from './idb';
 import { defaultWireStyle } from './model';
 
 setAutoFreeze(false);
@@ -39,6 +40,8 @@ export interface State {
   dirty: boolean;
   /** name of the file on disk that Save overwrites */
   linkedFile: string | null;
+  /** set when the browser autosave could not be written */
+  autosaveError: string | null;
 
   /** apply a change with undo history */
   commit: (fn: (d: Doc) => void) => void;
@@ -58,12 +61,6 @@ const LS_SETTINGS = 'schematizer.settings';
 
 function loadInitial(): Partial<State> {
   const out: Partial<State> = {};
-  try {
-    const d = localStorage.getItem(LS_DOC);
-    if (d) out.doc = JSON.parse(d);
-  } catch {
-    /* ignore */
-  }
   try {
     const s = localStorage.getItem(LS_SETTINGS);
     if (s) {
@@ -104,6 +101,7 @@ export const useStore = create<State>((set, get) => ({
   fileName: 'untitled',
   dirty: false,
   linkedFile: null,
+  autosaveError: null,
   ...loadInitial(),
 
   commit: (fn) => {
@@ -132,23 +130,86 @@ export const useStore = create<State>((set, get) => ({
   loadDoc: (doc, name) => set({ doc, past: [], future: [], sel: [], selPort: null, highlight: null, ...(name ? { fileName: name } : {}) }),
 }));
 
-// autosave
+// ---------------------------------------------------------------- autosave (IndexedDB)
+// The drawing used to be autosaved in localStorage, which only holds ~5 MB: larger drawings
+// (embedded images) silently stopped saving, and a reload brought back an old version.
+
+let restored = false; // no autosave until the saved drawing has been loaded back
 let saveTimer: number | undefined;
-let warned = false;
+
+let writing = 0; // autosave writes in progress
+
+async function writeAutosave() {
+  const doc = useStore.getState().doc;
+  writing++;
+  try {
+    await idbSet('doc', doc);
+    if (useStore.getState().autosaveError) useStore.setState({ autosaveError: null });
+  } catch (e: any) {
+    useStore.setState({ autosaveError: e?.message || 'browser storage is full' });
+  } finally {
+    writing--;
+  }
+}
+
+let restoring: Promise<void> | null = null;
+
+/** Load the autosaved drawing (once, at startup). */
+export function restoreAutosave(): Promise<void> {
+  restoring ??= doRestore();
+  return restoring;
+}
+
+async function doRestore(): Promise<void> {
+  const dirty = useStore.getState().dirty;
+  try {
+    let doc = await idbGet<Doc>('doc');
+    if (!doc) {
+      // move an old localStorage autosave over
+      const legacy = localStorage.getItem(LS_DOC);
+      if (legacy) doc = JSON.parse(legacy);
+    }
+    if (doc && typeof doc.objects === 'object' && Array.isArray(doc.order)) {
+      doc.wires ??= {};
+      doc.junctions ??= {};
+      useStore.getState().loadDoc(doc);
+      useStore.setState({ dirty });
+    }
+  } catch {
+    /* start with an empty drawing */
+  }
+  restored = true;
+  await writeAutosave();
+  try {
+    localStorage.removeItem(LS_DOC);
+  } catch {
+    /* ignore */
+  }
+}
+
+// Reloading while a backup is still being written: start it now and ask the browser to wait
+// ("Leave site?"), so a large drawing has time to finish saving.
+window.addEventListener('beforeunload', (e) => {
+  if (!restored) return;
+  if (saveTimer !== undefined) {
+    clearTimeout(saveTimer);
+    saveTimer = undefined;
+    writeAutosave();
+  }
+  if (writing > 0) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
 useStore.subscribe((s, prev) => {
-  if (s.doc !== prev.doc) {
+  if (s.doc !== prev.doc && restored) {
     if (!s.dirty) useStore.setState({ dirty: true });
     clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
-      try {
-        localStorage.setItem(LS_DOC, JSON.stringify(useStore.getState().doc));
-      } catch {
-        if (!warned) {
-          warned = true;
-          console.warn('Autosave failed (browser storage full). Use Save to keep your work.');
-        }
-      }
-    }, 400);
+      saveTimer = undefined;
+      writeAutosave();
+    }, 120);
   }
   const keys = ['snap', 'ortho', 'grid', 'showGrid', 'showRulers', 'showGuides', 'wireStyle', 'nodeStyle', 'exportNodes', 'fileName', 'dirty'] as const;
   if (keys.some((k) => s[k] !== prev[k])) {

@@ -29,6 +29,7 @@ button { font: inherit; color: inherit; }
 }
 .brand { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 15px; margin-right: 4px; }
 .file-box { display: inline-flex; align-items: center; gap: 2px; }
+.autosave-error { color: var(--danger); font-size: 12px; font-weight: 600; margin-left: 4px; }
 .dirty-dot { width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; flex: none; }
 .file-name {
   border: 1px solid transparent; border-radius: 6px; padding: 4px 6px; width: 120px; font: inherit; color: var(--muted); background: transparent;

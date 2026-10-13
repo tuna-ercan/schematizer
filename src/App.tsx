@@ -4,7 +4,7 @@ import { Canvas } from './Canvas';
 import { Properties } from './Properties';
 import { Library } from './Library';
 import { ContextMenu, type MenuItem } from './ContextMenu';
-import { useStore } from './store';
+import { restoreAutosave, useStore } from './store';
 import { addImageFile, align, copyStyle, pasteStyle, copyToClip, lastClipText, deleteSelection, duplicate, group, pasteFromText, rotateOrFlip, selectAll, ungroup, zOrder, zoomBy, zoomToFit } from './actions';
 import { openFile, restoreFileHandle, saveFile } from './files';
 import { loadUserSymbols, saveUserSymbols, type LibSymbol } from './symbols';
@@ -163,13 +163,15 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    // center the origin on first load
-    const s = useStore.getState();
-    if (s.doc.order.length) setTimeout(zoomToFit);
-    else {
-      const el = document.getElementById('canvas-wrap');
-      if (el) s.set({ pan: { x: Math.round(el.clientWidth / 2 / 10) * 10, y: Math.round(el.clientHeight / 2 / 10) * 10 } });
-    }
+    // bring back the autosaved drawing, then frame it (or center the origin)
+    restoreAutosave().then(() => {
+      const s = useStore.getState();
+      if (s.doc.order.length) zoomToFit();
+      else {
+        const el = document.getElementById('canvas-wrap');
+        if (el) s.set({ pan: { x: Math.round(el.clientWidth / 2 / 10) * 10, y: Math.round(el.clientHeight / 2 / 10) * 10 } });
+      }
+    });
   }, []);
 
   const openMenu = useCallback((x: number, y: number, items: MenuItem[]) => setMenu({ x, y, items }), []);

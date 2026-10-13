@@ -2,6 +2,7 @@ import { useStore } from './store';
 import { downloadBlob, parseProject } from './io';
 import { emptyDoc, type Doc } from './types';
 import { zoomToFit } from './actions';
+import { idbDel, idbGet, idbSet } from './idb';
 
 /**
  * Project files. Where the browser supports the File System Access API (Chrome, Edge),
@@ -23,21 +24,10 @@ export function serialize(doc: Doc) {
 }
 
 // ---------------------------------------------------------------- remember the file across reloads
-function db(): Promise<IDBDatabase> {
-  return new Promise((res, rej) => {
-    const r = indexedDB.open('schematizer', 1);
-    r.onupgradeneeded = () => r.result.createObjectStore('kv');
-    r.onsuccess = () => res(r.result);
-    r.onerror = () => rej(r.error);
-  });
-}
-
 async function storeHandle(h: any) {
   try {
-    const d = await db();
-    const tx = d.transaction('kv', 'readwrite');
-    if (h) tx.objectStore('kv').put(h, 'fileHandle');
-    else tx.objectStore('kv').delete('fileHandle');
+    if (h) await idbSet('fileHandle', h);
+    else await idbDel('fileHandle');
   } catch {
     /* not essential */
   }
@@ -46,12 +36,7 @@ async function storeHandle(h: any) {
 export async function restoreFileHandle() {
   if (!fileApiSupported) return;
   try {
-    const d = await db();
-    const h = await new Promise<any>((res) => {
-      const r = d.transaction('kv').objectStore('kv').get('fileHandle');
-      r.onsuccess = () => res(r.result ?? null);
-      r.onerror = () => res(null);
-    });
+    const h = await idbGet<any>('fileHandle');
     if (h) {
       handle = h;
       useStore.getState().set({ linkedFile: h.name });
