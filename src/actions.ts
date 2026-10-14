@@ -239,6 +239,21 @@ export function organizeAll() {
   organizeIds(Object.keys(S().doc.wires));
 }
 
+/** Give the nodes at both ends of the selected connections an outer ring in the wire's color. */
+export function matchNodeColors(ids = S().sel) {
+  const { doc } = S();
+  const wires = ids.map((id) => doc.wires[id]).filter(Boolean);
+  if (!wires.length) return;
+  S().commit((d) => {
+    for (const w of wires)
+      for (const ep of [w.a, w.b]) {
+        if (ep.kind !== 'port') continue;
+        const p = d.objects[ep.obj]?.ports.find((x) => x.id === ep.port);
+        if (p) p.style = { ...(p.style ?? S().nodeStyle), outerColor: w.color };
+      }
+  });
+}
+
 export function rerouteWire(id: string) {
   const { grid } = S();
   S().commit((d) => {

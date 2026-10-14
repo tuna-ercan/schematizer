@@ -5,7 +5,7 @@ import type { Dash, Doc, NodeStyle, Shape, WireStyle } from './types';
 import { DEFAULT_NODE_STYLE, NODE_LABEL_SIZE, OBJECT_LABEL_SIZE } from './types';
 import { autoRoute, defaultPortLabelOffset, defaultWireStyle, findPort, newShape, normalizeWire, reconcileWires } from './model';
 import { eq, objBBox, portDir } from './geometry';
-import { align, canPasteStyle, copyStyle, deleteSelection, group, organize, organizeAttached, pasteStyle, rotateOrFlip, ungroup, zOrder } from './actions';
+import { align, canPasteStyle, copyStyle, deleteSelection, group, matchNodeColors, organize, organizeAttached, pasteStyle, rotateOrFlip, ungroup, zOrder } from './actions';
 import { resizeObject, applyMove } from './edit';
 import { NodeDot } from './Scene';
 
@@ -591,6 +591,9 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
               }
             >
               Reset style
+            </button>
+            <button className="small-btn" title="Make the outer ring of the nodes at both ends the same color as the wire" onClick={() => matchNodeColors()}>
+              Match node colors
             </button>
             <StyleClipButtons />
             <button className="small-btn" onClick={organize}>

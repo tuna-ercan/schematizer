@@ -12,7 +12,7 @@ import {
 } from './model';
 import { routeOrtho } from './router';
 import { applyMove, dragCorner, dragSegment, insertCorner, movePort, portLocalAt, resizeObject } from './edit';
-import { canPasteStyle, copyStyle, pasteStyle, pointer, addImageFile, addObject, copyToClip, deleteSelection, duplicate, group, organize, organizeAll, organizeAttached, pasteFromText, rerouteWire, rotateOrFlip, selectAll, ungroup, zOrder, zoomToFit } from './actions';
+import { canPasteStyle, copyStyle, matchNodeColors, pasteStyle, pointer, addImageFile, addObject, copyToClip, deleteSelection, duplicate, group, organize, organizeAll, organizeAttached, pasteFromText, rerouteWire, rotateOrFlip, selectAll, ungroup, zOrder, zoomToFit } from './actions';
 import type { MenuItem } from './ContextMenu';
 import { instantiate, type LibSymbol } from './symbols';
 import { RULER, Rulers } from './Rulers';
@@ -797,6 +797,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
       items.push(
         { label: 'Re-route wire', action: () => rerouteWire(id) },
         { label: 'Organize selected wires', action: organize },
+        { label: 'Match node colors to wire', action: () => matchNodeColors() },
         { label: 'Highlight net', shortcut: 'Alt+Click', action: () => s.set({ highlight: netOfWire(S().doc, id) }) },
         { sep: true },
         ...styleItems(),
