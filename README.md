@@ -28,7 +28,7 @@ Your drawing is autosaved in the browser (IndexedDB, so large drawings with imag
 | Add nodes (connection points) | Node tool (N), then click on an object. Nodes snap to the object's edges |
 | Rename an object, node or text | Double-click it, or use the right-hand panel |
 | Label font size | Select an object: *Label size*, and *Node label size* for all its nodes. Select a node: *Label size* for that node |
-| Connect two nodes | Click a node, then click the other node. With no corners placed, the wire is auto-routed |
+| Connect two nodes | Click a node, then click the other node. With no corners placed, the wire is auto-routed. With **Simple routing** on (toolbar, default), a new wire only goes around parts and images and ignores other wires and labels; turn it off to also avoid other wires |
 | Add corners while drawing a wire | Click on empty canvas. Backspace removes the last corner, Esc cancels |
 | Connect to an existing wire | While drawing a wire, click on another wire. A junction dot is created |
 | Free wire end | Double-click on empty canvas while drawing a wire |

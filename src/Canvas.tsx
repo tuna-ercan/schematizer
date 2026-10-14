@@ -187,9 +187,9 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         if (!pts.length) {
           if ('kind' in to && to.kind === 'wirept') {
             const a = endpointPos(d, fromEp);
-            const full = routeOrtho(a, aDir, b, bDir, routeContext(d, new Set(), grid));
+            const full = routeOrtho(a, aDir, b, bDir, routeContext(d, new Set(), grid, S().simpleRoute));
             pts = full ? full.slice(1, -1) : orthoElbow(a, b, aDir, bDir, grid);
-          } else pts = autoRoute(d, fromEp, toEp, new Set(), grid);
+          } else pts = autoRoute(d, fromEp, toEp, new Set(), grid, S().simpleRoute);
         } else {
           pts = [...pts, ...orthoElbow(pts[pts.length - 1], b, null, bDir, grid)];
         }
@@ -214,9 +214,9 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
       const end = drawEndPos(d, tgt);
       if (S().ortho) {
         if (!cur.points.length) {
-          const key = JSON.stringify(tgt) + JSON.stringify(cur.from);
+          const key = JSON.stringify(tgt) + JSON.stringify(cur.from) + S().simpleRoute;
           if (routeCache.current?.key !== key) {
-            const full = routeOrtho(start, drawEndDir(d, cur.from), end, drawEndDir(d, tgt), routeContext(d, new Set(), S().grid));
+            const full = routeOrtho(start, drawEndDir(d, cur.from), end, drawEndDir(d, tgt), routeContext(d, new Set(), S().grid, S().simpleRoute));
             routeCache.current = { key, pts: full ?? [start, ...orthoElbow(start, end, drawEndDir(d, cur.from), drawEndDir(d, tgt), S().grid), end] };
           }
           setPreview(routeCache.current.pts);

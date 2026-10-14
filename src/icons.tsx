@@ -131,6 +131,12 @@ export const Icons = {
       <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
     </I>
   ),
+  simpleRoute: (
+    <I>
+      <rect x="9" y="9" width="6" height="6" rx="1" />
+      <path d="M3 12h3a2 2 0 002-2V7a2 2 0 012-2h4a2 2 0 012 2v3a2 2 0 002 2h3" />
+    </I>
+  ),
   ruler: (
     <I>
       <path d="M3 8h18v8H3z" />

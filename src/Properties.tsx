@@ -645,6 +645,9 @@ export function Properties({ onAddToLibrary }: { onAddToLibrary: (id: string) =>
         <Row label="Snap to grid">
           <Check label="" value={s.snap} onChange={(v) => s.set({ snap: v })} />
         </Row>
+        <Row label="New wires">
+          <Check label="only avoid parts" value={s.simpleRoute} onChange={(v) => s.set({ simpleRoute: v })} />
+        </Row>
         <Row label="Export">
           <Check label="include nodes in SVG/PNG" value={s.exportNodes} onChange={(v) => s.set({ exportNodes: v })} />
         </Row>

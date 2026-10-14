@@ -97,6 +97,17 @@ export function Toolbar({ onHelp }: { onHelp: () => void }) {
         <Btn title={`Orthogonal lock: ${s.ortho ? 'ON' : 'OFF'} (O)`} active={s.ortho} onClick={() => s.set({ ortho: !s.ortho })}>
           {Icons.ortho}
         </Btn>
+        <Btn
+          title={
+            s.simpleRoute
+              ? 'Simple routing: ON – new connections only go around parts/images and ignore other wires (click to also avoid wires and labels)'
+              : 'Simple routing: OFF – new connections also avoid other wires, crossings and labels (click to only avoid parts)'
+          }
+          active={s.simpleRoute}
+          onClick={() => s.set({ simpleRoute: !s.simpleRoute })}
+        >
+          {Icons.simpleRoute}
+        </Btn>
         <Btn title={`Snap to grid: ${s.snap ? 'ON' : 'OFF'} (G)`} active={s.snap} onClick={() => s.set({ snap: !s.snap })}>
           {Icons.snap}
         </Btn>

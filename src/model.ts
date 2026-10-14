@@ -340,8 +340,13 @@ export function labelBoxes(doc: Doc): Rect[] {
   return out;
 }
 
-export function routeContext(doc: Doc, excludeWires: Set<string>, grid: number): RouteContext {
+/**
+ * What the router steers around. `simple`: only parts/images; other wires and labels are ignored
+ * (used for new connections when "simple routing" is on).
+ */
+export function routeContext(doc: Doc, excludeWires: Set<string>, grid: number, simple = false): RouteContext {
   const obstacles: Obstacle[] = Object.values(doc.objects).map((o) => ({ ...objBBox(o), cost: COST_OBJECT }));
+  if (simple) return { obstacles, segments: [], grid };
   for (const r of labelBoxes(doc)) obstacles.push({ ...r, cost: COST_LABEL, soft: true });
   const segments: Seg[] = [];
   for (const w of Object.values(doc.wires)) {
@@ -353,10 +358,10 @@ export function routeContext(doc: Doc, excludeWires: Set<string>, grid: number):
 }
 
 /** Corner points of an automatic orthogonal route between two endpoints. */
-export function autoRoute(doc: Doc, a: Endpoint, b: Endpoint, excludeWires: Set<string>, grid: number): Vec[] {
+export function autoRoute(doc: Doc, a: Endpoint, b: Endpoint, excludeWires: Set<string>, grid: number, simple = false): Vec[] {
   const pa = endpointPos(doc, a), pb = endpointPos(doc, b);
   const da = endpointDir(doc, a), db = endpointDir(doc, b);
-  const full = routeOrtho(pa, da, pb, db, routeContext(doc, excludeWires, grid));
+  const full = routeOrtho(pa, da, pb, db, routeContext(doc, excludeWires, grid, simple));
   if (!full) return orthoElbow(pa, pb, da, db, grid);
   return full.slice(1, -1);
 }
