@@ -4,7 +4,7 @@ import type { Doc, Endpoint, Rect, Vec, Wire } from './types';
 import { useStore } from './store';
 import { Scene } from './Scene';
 import {
-  add, eq, objBBox, objCenter, pointsBBox, portWorld, projectOnPolyline, rectFromPoints, rectInside, roundedPath, snapN, snapV, sub, unionRect,
+  add, eq, localToWorld, objBBox, objCenter, pointsBBox, portWorld, projectOnPolyline, rectFromPoints, rectInside, roundedPath, snapN, snapV, sub, unionRect,
 } from './geometry';
 import {
   autoRoute, endpointDir, endpointPos, findPort, netOfWire, newObj, newPort, newShape, nextPortName, normalizeWire, orthoElbow,
@@ -373,7 +373,9 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
       const objId = t.kind === 'object' ? t.id : t.kind === 'olabel' ? t.id : undefined;
       if (objId && s.doc.objects[objId]) {
         const o = s.doc.objects[objId];
-        const lp = portLocalAt(o, m, s.grid, s.snap);
+        let lp = portLocalAt(o, m, s.grid, s.snap);
+        const g = guidePoint(localToWorld(o, lp), m);
+        if (g) lp = portLocalAt(o, g, s.grid, false);
         const p = newPort(o, lp, nextPortName(o));
         p.style = { ...s.nodeStyle };
         s.commit((d) => void d.objects[objId].ports.push(p));
@@ -489,6 +491,25 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
     };
   };
 
+  /**
+   * Line a point up with nearby guides. `raw` is the mouse position (decides which guide is near),
+   * `p` the already grid-snapped point. Returns null when no guide is near.
+   */
+  const guidePoint = (p: Vec, raw: Vec): Vec | null => {
+    const s = S();
+    const g = s.doc.guides;
+    if (!s.showGuides || !g) return null;
+    const tol = 8 / s.zoom;
+    const near = (v: number, list: number[]) => {
+      let best: number | null = null, bd = tol;
+      for (const gv of list) if (Math.abs(gv - v) < bd) { bd = Math.abs(gv - v); best = gv; }
+      return best;
+    };
+    const gx = near(raw.x, g.v), gy = near(raw.y, g.h);
+    if (gx === null && gy === null) return null;
+    return { x: gx ?? p.x, y: gy ?? p.y };
+  };
+
   const beginMove = (m: Vec, screen: Vec, clicked: string, shift: boolean) => {
     const s = S();
     const objs = new Set(s.sel.filter((id) => s.doc.objects[id]));
@@ -564,9 +585,14 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         s.setLive(produce(cur.orig, (d) => void (d.guides![cur.axis][cur.idx] = v)));
         return;
       }
-      case 'movePort':
-        s.setLive(movePort(cur.orig, cur.obj, cur.port, m, s.grid, s.snap));
+      case 'movePort': {
+        let next = movePort(cur.orig, cur.obj, cur.port, m, s.grid, s.snap);
+        const r = findPort(next, cur.obj, cur.port);
+        const g = r && guidePoint(portWorld(r.o, r.p), m);
+        if (g) next = movePort(cur.orig, cur.obj, cur.port, g, s.grid, false); // exactly on the guide
+        s.setLive(next);
         return;
+      }
       case 'label': {
         const off = add(cur.off0, sub(m, cur.start));
         s.setLive(
@@ -946,18 +972,20 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
   const hz = 1 / zoom;
   const overlays: React.ReactNode[] = [];
 
-  // ruler guides
+  // ruler guides: drawn on top, but grabbed only where no part, wire or node is in the way
+  // (their grab areas sit under the drawing), so nodes lined up on a guide stay draggable
+  const guideHits: React.ReactNode[] = [];
   if (st.showGuides && doc.guides) {
     const big = 1e6;
     (['v', 'h'] as const).forEach((axis) =>
       doc.guides![axis].forEach((v, i) => {
         const line = axis === 'v' ? { x1: v, x2: v, y1: -big, y2: big } : { x1: -big, x2: big, y1: v, y2: v };
-        overlays.unshift(
-          <g key={`g-${axis}-${i}`} data-kind="guide" data-handle={axis} data-idx={i} style={{ cursor: axis === 'v' ? 'ew-resize' : 'ns-resize' }}>
+        guideHits.push(
+          <g key={`gh-${axis}-${i}`} data-kind="guide" data-handle={axis} data-idx={i} style={{ cursor: axis === 'v' ? 'ew-resize' : 'ns-resize' }}>
             <line {...line} stroke="transparent" strokeWidth={7 * hz} />
-            <line {...line} stroke="#3aa76d" strokeWidth={hz} pointerEvents="none" />
           </g>,
         );
+        overlays.unshift(<line key={`g-${axis}-${i}`} {...line} stroke="#3aa76d" strokeWidth={hz} pointerEvents="none" />);
       }),
     );
   }
@@ -1044,6 +1072,7 @@ export function Canvas({ openMenu, onAddToLibrary }: { openMenu: (x: number, y: 
         {showGrid && gs >= 5 && <rect width="100%" height="100%" fill="url(#grid-minor)" pointerEvents="none" />}
         {showGrid && <rect width="100%" height="100%" fill="url(#grid-major)" pointerEvents="none" />}
         <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
+          {guideHits}
           <Scene doc={doc} interactive sel={selSet} highlight={highlight} hoverPort={hoverPort} />
           {overlays}
         </g>

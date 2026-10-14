@@ -25,7 +25,7 @@ Your drawing is autosaved in the browser (IndexedDB, so large drawings with imag
 |---|---|
 | Add an image | Toolbar image button (I), drag a file onto the canvas, or paste an image (Ctrl+V) |
 | Add a part | Click or drag a symbol from the left library |
-| Add nodes (connection points) | Node tool (N), then click on an object. Nodes snap to the object's edges |
+| Add nodes (connection points) | Node tool (N), then click on an object. Nodes snap to the object's edges, and to ruler guides when close to one (also when dragged); the rulers mark the selected node's position |
 | Rename an object, node or text | Double-click it, or use the right-hand panel |
 | Label font size | Select an object: *Label size*, and *Node label size* for all its nodes. Select a node: *Label size* for that node |
 | Connect two nodes | Click a node, then click the other node. With no corners placed, the wire is auto-routed. With **Simple routing** on (toolbar, default), a new wire only goes around parts and images and ignores other wires and labels; turn it off to also avoid other wires |

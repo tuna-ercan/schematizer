@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useStore } from './store';
-import { objBBox, snapN, unionRect } from './geometry';
+import { objBBox, portWorld, snapN, unionRect } from './geometry';
+import { findPort } from './model';
 
 export const RULER = 20;
 
@@ -24,9 +25,11 @@ interface TickProps {
   zoom: number;
   cursor: number | null;
   selRange: [number, number] | null;
+  /** world position of the selected node */
+  mark?: number | null;
 }
 
-function Ticks({ axis, length, pan, zoom, cursor, selRange }: TickProps) {
+function Ticks({ axis, length, pan, zoom, cursor, selRange, mark }: TickProps) {
   const major = tickStep(zoom);
   const minorDiv = major * zoom >= 100 ? 10 : 5;
   const minor = major / minorDiv;
@@ -54,6 +57,7 @@ function Ticks({ axis, length, pan, zoom, cursor, selRange }: TickProps) {
   }
   const sel = selRange && selRange.map((v) => v * zoom + pan);
   const cur = cursor != null ? Math.round(cursor) + 0.5 : null;
+  const mk = mark != null ? Math.round(mark * zoom + pan) + 0.5 : null;
   return (
     <>
       {sel &&
@@ -63,6 +67,20 @@ function Ticks({ axis, length, pan, zoom, cursor, selRange }: TickProps) {
           <rect className="ruler-sel" y={sel[0]} x={0} height={Math.max(1, sel[1] - sel[0])} width={RULER} />
         ))}
       <g className="ruler-ticks">{ticks}</g>
+      {mk != null &&
+        (axis === 'x' ? (
+          <g className="ruler-mark">
+            <line x1={mk} x2={mk} y1={0} y2={RULER} />
+            <polygon points={`${mk - 4},${RULER} ${mk + 4},${RULER} ${mk},${RULER - 6}`} />
+            <title>{`Node at ${fmt(mark!)}`}</title>
+          </g>
+        ) : (
+          <g className="ruler-mark">
+            <line y1={mk} y2={mk} x1={0} x2={RULER} />
+            <polygon points={`${RULER},${mk - 4} ${RULER},${mk + 4} ${RULER - 6},${mk}`} />
+            <title>{`Node at ${fmt(mark!)}`}</title>
+          </g>
+        ))}
       {cur != null &&
         (axis === 'x' ? <line className="ruler-cursor" x1={cur} x2={cur} y1={0} y2={RULER} /> : <line className="ruler-cursor" y1={cur} y2={cur} x1={0} x2={RULER} />)}
     </>
@@ -71,7 +89,7 @@ function Ticks({ axis, length, pan, zoom, cursor, selRange }: TickProps) {
 
 /** Photoshop-style rulers along the top and left edge of the canvas; drag from them to create guides. */
 export function Rulers() {
-  const { pan, zoom, showRulers, doc, sel, snap, grid } = useStore();
+  const { pan, zoom, showRulers, doc, sel, selPort, snap, grid } = useStore();
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
@@ -99,6 +117,8 @@ export function Rulers() {
   if (!showRulers) return <div ref={ref} style={{ display: 'none' }} />;
 
   const bb = unionRect(sel.filter((id) => doc.objects[id]).map((id) => objBBox(doc.objects[id])));
+  const sp = selPort && findPort(doc, selPort.obj, selPort.port);
+  const nodeAt = sp ? portWorld(sp.o, sp.p) : null;
 
   // dragging a new guide out of a ruler
   const startGuide = (axis: 'v' | 'h') => (e: React.PointerEvent) => {
@@ -142,13 +162,13 @@ export function Rulers() {
       <svg className="ruler ruler-top" width={size.w} height={RULER} onPointerDown={startGuide('h')} onPointerMove={moveGuide} onPointerUp={endGuide}>
         <title>Drag down to create a horizontal guide</title>
         <rect className="ruler-bg" width="100%" height="100%" />
-        <Ticks axis="x" length={size.w} pan={pan.x} zoom={zoom} cursor={cursor?.x ?? null} selRange={bb ? [bb.x, bb.x + bb.w] : null} />
+        <Ticks axis="x" length={size.w} pan={pan.x} zoom={zoom} cursor={cursor?.x ?? null} selRange={bb ? [bb.x, bb.x + bb.w] : null} mark={nodeAt?.x} />
         <line className="ruler-edge" x1={0} x2={size.w} y1={RULER - 0.5} y2={RULER - 0.5} />
       </svg>
       <svg className="ruler ruler-left" width={RULER} height={size.h} onPointerDown={startGuide('v')} onPointerMove={moveGuide} onPointerUp={endGuide}>
         <title>Drag right to create a vertical guide</title>
         <rect className="ruler-bg" width="100%" height="100%" />
-        <Ticks axis="y" length={size.h} pan={pan.y} zoom={zoom} cursor={cursor?.y ?? null} selRange={bb ? [bb.y, bb.y + bb.h] : null} />
+        <Ticks axis="y" length={size.h} pan={pan.y} zoom={zoom} cursor={cursor?.y ?? null} selRange={bb ? [bb.y, bb.y + bb.h] : null} mark={nodeAt?.y} />
         <line className="ruler-edge" y1={0} y2={size.h} x1={RULER - 0.5} x2={RULER - 0.5} />
       </svg>
       <div className="ruler-corner" title="Rulers (Ctrl+R) · drag from a ruler to add a guide" />
